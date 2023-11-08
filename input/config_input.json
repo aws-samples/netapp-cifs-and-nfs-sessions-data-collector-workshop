@@ -1,0 +1,15 @@
+{
+  "pollInterval": 600,
+  "storageList":[
+    {
+      "Name":"fsxn01",
+      "Credentials":["fsxadmin","vkRqaqsYNsfTc9Lp"],
+      "Address":"10.10.10.116"
+    },
+    {
+      "Name":"fsxn02",
+      "Credentials":["fsxadmin","qx3tuEl0IsGeSlFs"],
+      "Address":"10.10.10.33"
+    }
+  ]
+}
