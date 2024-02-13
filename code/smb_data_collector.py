@@ -81,15 +81,17 @@ def getSessionsData(storageSystem):
             sessionResponse = requests.get(netapp_storage['url']+sessionLink,
                                 headers=netapp_storage['header'],
                                 verify=False).json()
-            sessionColumns = ['node',
-                                'storage-name',
-                                'vserver', 
-                                'session-id',
-                                'connection-id',
-                                'lif-address', 
-                                'address',
-                                'windows-user',
-                                'volume']
+            sessionColumns = [
+                'node',
+                'storage-name',
+                'vserver', 
+                'session-id',
+                'connection-id',
+                'lif-address', 
+                'address',
+                'windows-user',
+                'volume'
+            ]
             for vol in sessionResponse['volumes']:
                 rounded_dt = pd.Timestamp(datetime.now()).round(f'{pollInterval}s')
                 time=datetime.strftime(rounded_dt,'%Y%m%d%H%M%S')
@@ -164,16 +166,18 @@ def readSessionsQueue(storageSystem):
     q = storageSystem['sessionsQueue']
     storageName = storageSystem['Name']
     netapp_storage = storageSystem['netapp_storage']
-    sessionColumns = ['timestamp',
-                        'storage-name',
-                        'node',
-                        'vserver',
-                        'session-id',
-                        'connection-id',
-                        'volume',
-                        'lif-address',
-                        'address',
-                        'windows-user']
+    sessionColumns = [
+        'timestamp',
+        'storage-name',
+        'node',
+        'vserver',
+        'session-id',
+        'connection-id',
+        'volume',
+        'lif-address',
+        'address',
+        'windows-user'
+    ]
     while  True:
 
         # Create new CSV file for each day
@@ -197,17 +201,19 @@ def readFilesQueue(storageSystem):
     q = storageSystem['filesQueue']
     storageName = storageSystem['Name']
     netapp_storage = storageSystem['netapp_storage']
-    filesColumns = ['timestamp',
-                        'storage-name',
-                        'node',
-                        'vserver',
-                        'session-id',
-                        'connection-id',
-                        'volume',
-                        'share',
-                        'path']
-    while  True:
+    filesColumns = [
+        'timestamp',
+        'storage-name',
+        'node',
+        'vserver',
+        'session-id',
+        'connection-id',
+        'volume',
+        'share',
+        'path'
+    ]
 
+    while True:
         # Create new CSV file for each day
         date = pd.Timestamp(datetime.now()).strftime('%Y%m%d')
         target_folder = f'/usr/app/output/'

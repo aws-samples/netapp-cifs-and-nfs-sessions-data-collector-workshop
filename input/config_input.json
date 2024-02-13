@@ -2,14 +2,14 @@
   "pollInterval": 600,
   "storageList":[
     {
-      "Name":"fsxn01",
-      "Credentials":["fsxadmin","vkRqaqsYNsfTc9Lp"],
-      "Address":"10.10.10.116"
+      "Name":"<<Storage Name>>",
+      "Credentials":["<<USER>>","<<password>>"],
+      "Address":"<<IP ADDRESS>>"
     },
     {
-      "Name":"fsxn02",
-      "Credentials":["fsxadmin","qx3tuEl0IsGeSlFs"],
-      "Address":"10.10.10.33"
+      "Name":"<<Storage Name>>",
+      "Credentials":["<<USER>>","<<password>>"],
+      "Address":"<<IP ADDRESS>>"
     }
   ]
 }

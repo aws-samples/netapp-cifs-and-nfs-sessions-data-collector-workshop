@@ -1,0 +1,6 @@
+*/.gitignore
+output/*.csv
+output/*.xlsx
+input/*.csv
+input/*.json
+*/*.ipynb

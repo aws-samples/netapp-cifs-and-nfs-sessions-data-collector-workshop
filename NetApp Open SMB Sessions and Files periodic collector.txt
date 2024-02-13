@@ -1,0 +1,76 @@
+title "NetApp Open SMB Sessions and Files periodic collector"
+option footer=bar
+autonumber 1
+
+participant User
+participant "Input Files" as if
+participant "Linux host" as vm
+participant "Storage System" as storage
+participant "Docker Container" as container
+participant "Sessions Thread" as st
+participant "Files Thread" as ft
+participant "CSV Thread" as ct
+
+User->if: Create Config file
+note left of if:
+{
+  "pollInterval": 900,
+  "storageList":[
+    {
+      "Name":"STORAGE NAME",
+      "Credentials":["user","password"],
+      "Address":"IP ADDRESS"
+    },
+    {
+      "Name":"STORAGE NAME",
+      "Credentials":["user","password"],
+      "Address":"IP ADDRESS"
+    }
+  ]
+}
+end note
+
+User-->if: Create servers inventory CSV
+
+User-->vm: git clone repo
+User-->vm: Upload Config and CSV files
+User-->vm: docker-compose up -d
+vm-->container: Start containers
+container-->container: Creates folders for each Storage
+
+
+alt For each Storage
+container-->st: Create Queues
+container-->ft: Create CSV files
+container->storage: REST Authentication
+storage->container: Authenticated
+
+alt SMB Details
+note over storage, st, ft, ct:
+Save SMB sessions and open files for each Storage system
+end note
+loop Save Sessions details
+st->storage: Request SMB Sessions details
+storage->st: Respond SMB sessions details
+st->st: Add to SMB Queue
+st->st: Wait for pollInterval duration
+end
+loop Save Files details
+ft->storage: Request SMB Files details
+storage->ft: Respond SMB Files details
+ft->ft: Add to Files Queue
+ft->ft: Wait for pollInterval duration
+end
+loop Save to CSV
+ct->+st: 
+st-->-ct: Read from SMB Queue
+ct->+ft:
+ft-->-ct: Read from Files Queue 
+ct->ct: Add to CSV file
+end
+end
+
+
+end
+
+
