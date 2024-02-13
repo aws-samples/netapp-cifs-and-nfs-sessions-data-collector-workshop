@@ -39,3 +39,6 @@
      => => #   Getting requirements to build wheel: started
     ```
 
+# Data collection sequence diagram
+
+![](NetApp%20Open%20SMB%20Sessions%20and%20Files%20periodic%20collector.png)
