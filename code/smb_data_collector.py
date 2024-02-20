@@ -17,6 +17,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+SSL_VERIFY = False
 
 def getClusterInformation(storageSystem):
     #Variable for Cluster information
@@ -42,7 +43,7 @@ def getClusterInformation(storageSystem):
     #Get Call for cluster information
     clusterNameReq = requests.get(clusterDict['url']+clusterString,
         headers=clusterDict['header'],
-        verify=False)
+        verify=SSL_VERIFY)
     #catch clusterNameReq.status_code
 
     #Adding cluster's name to dictionary
@@ -54,7 +55,7 @@ def getClusterInformation(storageSystem):
     #Get call for IP Addresses
     networkIntReq = requests.get(clusterDict['url']+networkIntString,
         headers=clusterDict['header'],
-        verify=False)
+        verify=SSL_VERIFY)
 
     #Adding interfaces to an array in the dictionary
     clusterDict['interfaces'] = []
@@ -74,13 +75,13 @@ def getSessionsData(storageSystem):
         parameters='?return_timeout=15&return_records=true&max_records=10000'
         cSessions = requests.get(netapp_storage['url']+clusterString+parameters,
                         headers=netapp_storage['header'],
-                        verify=False).json()
+                        verify=SSL_VERIFY).json()
         for record in cSessions['records']:
             sessionData=[]
             sessionLink = record['_links']['self']['href']
             sessionResponse = requests.get(netapp_storage['url']+sessionLink,
                                 headers=netapp_storage['header'],
-                                verify=False).json()
+                                verify=SSL_VERIFY).json()
             sessionColumns = [
                 'node',
                 'storage-name',
@@ -130,7 +131,7 @@ def getFilesData(storageSystem):
         parameters='?return_timeout=15&return_records=true&max_records=10000'
         cFData = requests.get(netapp_storage['url']+cFileString+parameters,
                     headers=netapp_storage['header'],
-                    verify=False).json()
+                    verify=SSL_VERIFY).json()
         cFDetails = []
         if len(cFData['records']) > 0:
                 for cFRecord in cFData['records']:
@@ -143,7 +144,7 @@ def getFilesData(storageSystem):
                                 )
                     cFDetails.append(requests.get(netapp_storage['url']+cFileString,
                         headers=netapp_storage['header'],
-                        verify=False).json())
+                        verify=SSL_VERIFY).json())
         if len(cFDetails) > 0:
             for cFRecord in cFDetails:
                 rounded_dt = pd.Timestamp(datetime.now()).round(f'{pollInterval}s')
