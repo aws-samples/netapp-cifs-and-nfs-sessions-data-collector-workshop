@@ -13,8 +13,8 @@ term_handler() {
 
 trap 'kill ${!}; term_handler' SIGTERM
 
-/usr/local/bin/python /usr/app/code/smb_data_collector.py &
-/usr/local/bin/python /usr/app/code/nfs_data_collector.py &
+/bin/python3 /usr/app/code/smb_data_collector.py &
+/bin/python3 /usr/app/code/nfs_data_collector.py &
 pid="$!"
 
 while true
