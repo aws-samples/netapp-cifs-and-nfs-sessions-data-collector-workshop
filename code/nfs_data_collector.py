@@ -42,10 +42,14 @@ def getClusterInformation(storageSystem):
     clusterString = "/api/cluster"
 
     #Get Call for cluster information
-    clusterNameReq = requests.get(clusterDict['url']+clusterString,
-        headers=clusterDict['header'],
-        verify=SSL_VERIFY,
-        timeout=(5,120))
+    try:
+        clusterNameReq = requests.get(clusterDict['url']+clusterString,
+            headers=clusterDict['header'],
+            verify=SSL_VERIFY,
+            timeout=(5, 120))
+        clusterNameReq.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP Error {e.args[0]}")
     #catch clusterNameReq.status_code
 
     #Adding cluster's name to dictionary
@@ -55,10 +59,14 @@ def getClusterInformation(storageSystem):
     networkIntString = "/api/network/ip/interfaces?services=intercluster-core&fields=ip.address"
 
     #Get call for IP Addresses
-    networkIntReq = requests.get(clusterDict['url']+networkIntString,
-        headers=clusterDict['header'],
-        verify=SSL_VERIFY,
-        timeout=(5,120))
+    try:
+        networkIntReq = requests.get(clusterDict['url']+networkIntString,
+            headers=clusterDict['header'],
+            verify=SSL_VERIFY,
+            timeout=(5,120))
+        networkIntReq.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP Error {e.args[0]}")
 
     #Adding interfaces to an array in the dictionary
     clusterDict['interfaces'] = []
@@ -77,10 +85,14 @@ def getNfsClientsData(storageSystem):
 
         clusterString='/api/protocols/nfs/connected-clients'
         parameters='?return_timeout=25&return_records=true&max_records=10000&idle_duration=PT*'
-        cNfsClients = requests.get(netapp_storage['url']+clusterString+parameters,
-                        headers=netapp_storage['header'],
-                        verify=SSL_VERIFY,
-                        timeout=(5,120)).json()['records']
+        try:
+            cNfsClients = requests.get(netapp_storage['url']+clusterString+parameters,
+                            headers=netapp_storage['header'],
+                            verify=SSL_VERIFY,
+                            timeout=(5,120)).json()['records']
+            cNfsClients.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTP Error {e.args[0]}")
 
         for cn in cNfsClients:
             idle = split_time_string(cn['idle_duration'])

@@ -41,11 +41,14 @@ def getClusterInformation(storageSystem):
     clusterString = "/api/cluster"
 
     #Get Call for cluster information
-    clusterNameReq = requests.get(clusterDict['url']+clusterString,
-        headers=clusterDict['header'],
-        verify=SSL_VERIFY,
-        timeout=(5, 120))
-    #catch clusterNameReq.status_code
+    try:
+        clusterNameReq = requests.get(clusterDict['url']+clusterString,
+            headers=clusterDict['header'],
+            verify=SSL_VERIFY,
+            timeout=(5, 120)).raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP Error {e.args[0]}")
+        #catch clusterNameReq.status_code
 
     #Adding cluster's name to dictionary
     clusterDict['name'] = clusterNameReq.json()['name']
@@ -54,10 +57,13 @@ def getClusterInformation(storageSystem):
     networkIntString = "/api/network/ip/interfaces?services=intercluster-core&fields=ip.address"
 
     #Get call for IP Addresses
-    networkIntReq = requests.get(clusterDict['url']+networkIntString,
-        headers=clusterDict['header'],
-        verify=SSL_VERIFY,
-        timeout=(5, 120))
+    try:
+        networkIntReq = requests.get(clusterDict['url']+networkIntString,
+            headers=clusterDict['header'],
+            verify=SSL_VERIFY,
+            timeout=(5, 120)).raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP Error {e.args[0]}")
 
     #Adding interfaces to an array in the dictionary
     clusterDict['interfaces'] = []
@@ -75,17 +81,25 @@ def getSessionsData(storageSystem):
         # Netapp cifs Sessions API
         clusterString='/api/protocols/cifs/sessions'
         parameters='?return_timeout=15&return_records=true&max_records=10000'
-        cSessions = requests.get(netapp_storage['url']+clusterString+parameters,
-                        headers=netapp_storage['header'],
-                        verify=SSL_VERIFY,
-                        timeout=(5, 120)).json()
+        try:
+            cSessions = requests.get(netapp_storage['url']+clusterString+parameters,
+                            headers=netapp_storage['header'],
+                            verify=SSL_VERIFY,
+                            timeout=(5, 120)).json().raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTP Error {e.args[0]}")
+
         for record in cSessions['records']:
             sessionData=[]
             sessionLink = record['_links']['self']['href']
-            sessionResponse = requests.get(netapp_storage['url']+sessionLink,
-                                headers=netapp_storage['header'],
-                                verify=SSL_VERIFY,
-                                timeout=(5, 120)).json()
+            try:
+                sessionResponse = requests.get(netapp_storage['url']+sessionLink,
+                                    headers=netapp_storage['header'],
+                                    verify=SSL_VERIFY,
+                                    timeout=(5, 120)).json().raise_for_status()
+            except requests.exceptions.HTTPError as e:
+                print(f"HTTP Error {e.args[0]}")
+
             sessionColumns = [
                 'node',
                 'storage-name',
@@ -133,10 +147,14 @@ def getFilesData(storageSystem):
     while True:
         cFileString='/api/protocols/cifs/session/files'
         parameters='?return_timeout=15&return_records=true&max_records=10000'
-        cFData = requests.get(netapp_storage['url']+cFileString+parameters,
-                    headers=netapp_storage['header'],
-                    verify=SSL_VERIFY,
-                    timeout=(5, 120)).json()
+        try:
+            cFData = requests.get(netapp_storage['url']+cFileString+parameters,
+                        headers=netapp_storage['header'],
+                        verify=SSL_VERIFY,
+                        timeout=(5, 120)).json().raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            print(f"HTTP Error {e.args[0]}")
+
         cFDetails = []
         if len(cFData['records']) > 0:
                 for cFRecord in cFData['records']:
@@ -147,10 +165,13 @@ def getFilesData(storageSystem):
                                     cFRecord['connection']['identifier'], 
                                     cFRecord['session']['identifier']
                                 )
-                    cFDetails.append(requests.get(netapp_storage['url']+cFileString,
-                        headers=netapp_storage['header'],
-                        verify=SSL_VERIFY,
-                        timeout=(5, 120)).json())
+                    try:
+                        cFDetails.append(requests.get(netapp_storage['url']+cFileString,
+                            headers=netapp_storage['header'],
+                            verify=SSL_VERIFY,
+                            timeout=(5, 120)).json()).raise_for_status()
+                    except requests.exceptions.HTTPError as e:
+                        print(f"HTTP Error {e.args[0]}")
         if len(cFDetails) > 0:
             for cFRecord in cFDetails:
                 rounded_dt = pd.Timestamp(datetime.now()).round(f'{pollInterval}s')
