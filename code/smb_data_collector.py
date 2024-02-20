@@ -192,14 +192,14 @@ def readSessionsQueue(storageSystem):
         target_folder = f'/usr/app/output/'
         csvfile = f'{target_folder}/{storageName}_{date}_sessions.csv'    
         if not os.path.isfile(csvfile):
-            with open(csvfile, "w") as cf:
+            with open(csvfile, "w", encoding="utf-8") as cf:
                 writer_object = writer(cf)
                 writer_object.writerow(sessionColumns)
 
         # Write SMB Sessions data to CSV
         sessionData=q.get()
         # print(sessionData)
-        with open(csvfile, "a") as cf:
+        with open(csvfile, "a", encoding="utf-8") as cf:
             writer_object = writer(cf)
             writer_object.writerow(sessionData)
 
@@ -226,25 +226,26 @@ def readFilesQueue(storageSystem):
         target_folder = f'/usr/app/output/'
         csvfile = f'{target_folder}/{storageName}_{date}_filesOpen.csv'  
         if not os.path.isfile(csvfile):
-            with open(csvfile, "w") as cf:
+            with open(csvfile, "w", encoding="utf-8") as cf:
                 writer_object = writer(cf)
                 writer_object.writerow(filesColumns)
 
         # Write Open Files data to CSV
         fileData=q.get()
         # print(fileData)
-        with open(csvfile, "a") as cf:
+        with open(csvfile, "a", encoding="utf-8") as cf:
             writer_object = writer(cf)
             writer_object.writerow(fileData)
 
 
 def combineOutputs(storageConfigs):
-    pass
+    # Dedupe CSV files to summarize by date
+    return True
 
 
 def main():
     # Read the config json file
-    with open('/usr/app/input/config_input.json') as f:
+    with open('/usr/app/input/config_input.json', encoding="utf-8") as f:
         storageConfigs = json.load(f)
     storageList = storageConfigs['storageList']
     pollInterval = storageConfigs['pollInterval']
