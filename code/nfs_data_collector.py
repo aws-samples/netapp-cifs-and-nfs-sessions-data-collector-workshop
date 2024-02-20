@@ -166,7 +166,8 @@ def split_time_string(time_string):
 
 
 def combineOutputs(storageConfigs):
-    pass
+    # Dedupe CSV files to summarize by date
+    return True
 
 
 def main():
