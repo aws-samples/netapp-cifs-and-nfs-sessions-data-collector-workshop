@@ -18,7 +18,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-SSL_verify=SSL_VERIFY
+SSL_verify=False
 
 def getClusterInformation(storageSystem):
     #Variable for Cluster information
@@ -44,7 +44,8 @@ def getClusterInformation(storageSystem):
     #Get Call for cluster information
     clusterNameReq = requests.get(clusterDict['url']+clusterString,
         headers=clusterDict['header'],
-        verify=SSL_VERIFY)
+        verify=SSL_VERIFY,
+        timeout=(5,120))
     #catch clusterNameReq.status_code
 
     #Adding cluster's name to dictionary
@@ -56,7 +57,8 @@ def getClusterInformation(storageSystem):
     #Get call for IP Addresses
     networkIntReq = requests.get(clusterDict['url']+networkIntString,
         headers=clusterDict['header'],
-        verify=SSL_VERIFY)
+        verify=SSL_VERIFY,
+        timeout=(5,120))
 
     #Adding interfaces to an array in the dictionary
     clusterDict['interfaces'] = []
@@ -77,7 +79,8 @@ def getNfsClientsData(storageSystem):
         parameters='?return_timeout=25&return_records=true&max_records=10000&idle_duration=PT*'
         cNfsClients = requests.get(netapp_storage['url']+clusterString+parameters,
                         headers=netapp_storage['header'],
-                        verify=SSL_VERIFY).json()['records']
+                        verify=SSL_VERIFY,
+                        timeout=(5,120)).json()['records']
 
         for cn in cNfsClients:
             idle = split_time_string(cn['idle_duration'])
