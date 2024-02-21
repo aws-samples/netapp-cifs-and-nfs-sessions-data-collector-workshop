@@ -19,9 +19,8 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 global SSL_verify
-SSL_VERIFY = False
 
-def getClusterInformation(storageSystem):
+def getClusterInformation(storageSystem, SSL_VERIFY):
     #Variable for Cluster information
     clusterDict = {}
 
@@ -77,13 +76,12 @@ def getClusterInformation(storageSystem):
     return clusterDict
 
 
-def getNfsClientsData(storageSystem):
+def getNfsClientsData(storageSystem, SSL_VERIFY):
     q = storageSystem['nfsClientQueue']
     netapp_storage = storageSystem['netapp_storage']
     pollInterval = storageSystem['pollInterval']
 
     while True:
-
         clusterString='/api/protocols/nfs/connected-clients'
         parameters='?return_timeout=25&return_records=true&max_records=10000&idle_duration=PT*'
         try:
@@ -97,6 +95,7 @@ def getNfsClientsData(storageSystem):
             print(f"HTTP Error {e.args[0]}")
 
         try:
+
             for cn in cNfsClients:
                 idle = split_time_string(cn['idle_duration'])
                 c1 = (idle <= pollInterval)
@@ -112,26 +111,15 @@ def getNfsClientsData(storageSystem):
                             cn['client_ip'],
                             cn['volume']['name']          
                         ]
-
-                    nfsSessionColumns = [
-                            'timestamp',
-                            'storage-name',
-                            'vserver', 
-                            'lif-address', 
-                            'address',
-                            'volume'
-                        ]
-                    # print(nfsSessionData)
                     q.put(nfsSessionData)
             sleep(pollInterval)
         except TypeError:
-            print("TypeErrors ignored")
+            print("Ignored results with TypeErrors")
 
 
 def readNfsClientsQueue(storageSystem):
     q = storageSystem['nfsClientQueue']
     storageName = storageSystem['Name']
-    netapp_storage = storageSystem['netapp_storage']
     sessionColumns = [
             'timestamp',
             'storage-name',
@@ -141,7 +129,6 @@ def readNfsClientsQueue(storageSystem):
             'volume'
         ]
     while  True:
-
         # Create new CSV file for each day
         date = pd.Timestamp(datetime.now()).strftime('%Y%m%d')
         target_folder = f'/usr/app/output/'
@@ -193,14 +180,14 @@ def main():
         storageConfigs = json.load(f)
     storageList = storageConfigs['storageList']
     pollInterval = storageConfigs['pollInterval']
-
+    SSL_VERIFY = storageConfigs['SSL_VERIFY']
     # Create queue and the threads for each storage system
     for storageSystem in storageList:
         storageSystem['pollInterval'] = pollInterval
         storageSystem['nfsClientQueue'] = queue.Queue()
-        storageSystem['netapp_storage'] = getClusterInformation(storageSystem)
+        storageSystem['netapp_storage'] = getClusterInformation(storageSystem,SSL_VERIFY)
         storageSystem['getNfsClientsData'] = threading.Thread(target=getNfsClientsData, 
-                                                args=(storageSystem,))
+                                                args=(storageSystem,SSL_VERIFY,))
         storageSystem['readtNfsClientsData'] = threading.Thread(target=readNfsClientsQueue, 
                                                 args=(storageSystem,))
 

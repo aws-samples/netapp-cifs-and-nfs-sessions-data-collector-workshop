@@ -1,5 +1,6 @@
 {
   "pollInterval": 600,
+  "SSL_VERIFY" : false,
   "storageList":[
     {
       "Name":"<<Storage Name>>",

@@ -4,7 +4,7 @@ from time import sleep
 import requests
 import base64
 import json
-from defusedcsv.csv import writer
+from defusedcsv.csv import writer 
 import logging
 from datetime import datetime, timedelta
 import pandas as pd
@@ -18,9 +18,8 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 global SSL_VERIFY
-SSL_VERIFY = False
 
-def getClusterInformation(storageSystem):
+def getClusterInformation(storageSystem, SSL_VERIFY):
     #Variable for Cluster information
     clusterDict = {}
 
@@ -76,7 +75,7 @@ def getClusterInformation(storageSystem):
     return clusterDict
 
 
-def getSessionsData(storageSystem):
+def getSessionsData(storageSystem, SSL_VERIFY):
     q = storageSystem['sessionsQueue']
     netapp_storage = storageSystem['netapp_storage']
     pollInterval = storageSystem['pollInterval']
@@ -102,7 +101,7 @@ def getSessionsData(storageSystem):
                                     headers=netapp_storage['header'],
                                     verify=SSL_VERIFY,
                                     timeout=(5, 120))
-                sessionResponseReq.raise_for_status()
+                sessionResponse.raise_for_status()
                 sessionResponse = sessionResponseReq.json()
             except requests.exceptions.HTTPError as e:
                 print(f"HTTP Error {e.args[0]}")
@@ -147,7 +146,7 @@ def getSessionsData(storageSystem):
         sleep(pollInterval)
 
 
-def getFilesData(storageSystem):
+def getFilesData(storageSystem, SSL_VERIFY):
     q = storageSystem['filesQueue']
     netapp_storage = storageSystem['netapp_storage']
     pollInterval = storageSystem['pollInterval']
@@ -204,7 +203,6 @@ def getFilesData(storageSystem):
 def readSessionsQueue(storageSystem):
     q = storageSystem['sessionsQueue']
     storageName = storageSystem['Name']
-    netapp_storage = storageSystem['netapp_storage']
     sessionColumns = [
         'timestamp',
         'storage-name',
@@ -239,7 +237,6 @@ def readSessionsQueue(storageSystem):
 def readFilesQueue(storageSystem):
     q = storageSystem['filesQueue']
     storageName = storageSystem['Name']
-    netapp_storage = storageSystem['netapp_storage']
     filesColumns = [
         'timestamp',
         'storage-name',
@@ -281,27 +278,17 @@ def main():
         storageConfigs = json.load(f)
     storageList = storageConfigs['storageList']
     pollInterval = storageConfigs['pollInterval']
-    # CSV File headers for Storage Assessment
-    outColumns = ['timestamp',
-                    'storageName',
-                    'node',
-                    'vserver',
-                    'session-id',
-                    'connection-id',
-                    'share',
-                    'lif-address',
-                    'address',
-                    'windows-user']
+    SSL_VERIFY = storageConfigs['SSL_VERIFY']
     # Create queue and the threads for each storage system
     for storageSystem in storageList:
         storageSystem['pollInterval'] = pollInterval
         storageSystem['sessionsQueue'] = queue.Queue()
         storageSystem['filesQueue'] = queue.Queue()
-        storageSystem['netapp_storage'] = getClusterInformation(storageSystem)
+        storageSystem['netapp_storage'] = getClusterInformation(storageSystem, SSL_VERIFY)
         storageSystem['getSessionsData'] = threading.Thread(target=getSessionsData, 
-                                                args=(storageSystem,))
+                                                args=(storageSystem, SSL_VERIFY,))
         storageSystem['getFilesData'] = threading.Thread(target=getFilesData, 
-                                            args=(storageSystem,))
+                                            args=(storageSystem, SSL_VERIFY,))
         storageSystem['readSessionsData'] = threading.Thread(target=readSessionsQueue, 
                                                 args=(storageSystem,))
         storageSystem['readFilesData'] = threading.Thread(target=readFilesQueue, 
