@@ -11,3 +11,5 @@ services:
       - ./input:/usr/app/input:ro
       - ./output:/usr/app/output:rw
     entrypoint: /bin/bash /usr/app/code/entrypoint.sh
+    security_opt:
+      - no-new-privileges:true
