@@ -5,10 +5,10 @@ from time import sleep
 fileColumns     = ['timestamp','storage-name','node','vserver','session-id','connection-id','volume','share','path']
 sessionColumns  = ['timestamp','storage-name','node','vserver','session-id','connection-id','volume','lif-address','address','windows-user']
 
-with open('/usr/app/output/fsxn01_filesOpen.csv') as f:
+with open('/usr/app/output/fsxn01_filesOpen.csv', encoding="utf-8") as f:
     filesOpen = pd.read_csv(f)
 
-with open('/usr/app/output/fsxn01_sessions.csv') as f:
+with open('/usr/app/output/fsxn01_sessions.csv', encoding="utf-8") as f:
     sessions = pd.read_csv(f)
 
 cols_to_rename = {
