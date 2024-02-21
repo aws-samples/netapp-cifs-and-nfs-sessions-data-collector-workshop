@@ -118,7 +118,7 @@ def getNfsClientsData(storageSystem):
                             'storage-name',
                             'vserver', 
                             'lif-address', 
-                            'address'
+                            'address',
                             'volume'
                         ]
                     # print(nfsSessionData)
