@@ -101,22 +101,10 @@ def getSessionsData(storageSystem, SSL_VERIFY):
                                     headers=netapp_storage['header'],
                                     verify=SSL_VERIFY,
                                     timeout=(5, 120))
-                sessionResponse.raise_for_status()
+                sessionResponseReq.raise_for_status()
                 sessionResponse = sessionResponseReq.json()
             except requests.exceptions.HTTPError as e:
                 print(f"HTTP Error {e.args[0]}")
-
-            sessionColumns = [
-                'node',
-                'storage-name',
-                'vserver', 
-                'session-id',
-                'connection-id',
-                'lif-address', 
-                'address',
-                'windows-user',
-                'volume'
-            ]
             for vol in sessionResponse['volumes']:
                 rounded_dt = pd.Timestamp(datetime.now()).round(f'{pollInterval}s')
                 time=datetime.strftime(rounded_dt,'%Y%m%d%H%M%S')
