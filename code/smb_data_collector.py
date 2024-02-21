@@ -102,7 +102,7 @@ def getSessionsData(storageSystem):
                                     headers=netapp_storage['header'],
                                     verify=SSL_VERIFY,
                                     timeout=(5, 120))
-                sessionResponse.raise_for_status()
+                sessionResponseReq.raise_for_status()
                 sessionResponse = sessionResponseReq.json()
             except requests.exceptions.HTTPError as e:
                 print(f"HTTP Error {e.args[0]}")

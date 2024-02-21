@@ -96,33 +96,36 @@ def getNfsClientsData(storageSystem):
         except requests.exceptions.HTTPError as e:
             print(f"HTTP Error {e.args[0]}")
 
-        for cn in cNfsClients:
-            idle = split_time_string(cn['idle_duration'])
-            c1 = (idle <= pollInterval)
-            c2 = (cn['volume']['name'] != f"{cn['svm']['name']}_root")
-            if c1 and c2:
-                rounded_dt = pd.Timestamp(datetime.now()).round(f'{pollInterval}s')
-                time=datetime.strftime(rounded_dt,'%Y%m%d%H%M%S')
-                nfsSessionData=[
-                        time,
-                        storageSystem['Name'],
-                        cn['svm']['name'],
-                        cn['server_ip'],
-                        cn['client_ip'],
-                        cn['volume']['name']          
-                    ]
+        try:
+            for cn in cNfsClients:
+                idle = split_time_string(cn['idle_duration'])
+                c1 = (idle <= pollInterval)
+                c2 = (cn['volume']['name'] != f"{cn['svm']['name']}_root")
+                if c1 and c2:
+                    rounded_dt = pd.Timestamp(datetime.now()).round(f'{pollInterval}s')
+                    time=datetime.strftime(rounded_dt,'%Y%m%d%H%M%S')
+                    nfsSessionData=[
+                            time,
+                            storageSystem['Name'],
+                            cn['svm']['name'],
+                            cn['server_ip'],
+                            cn['client_ip'],
+                            cn['volume']['name']          
+                        ]
 
-                nfsSessionColumns = [
-                        'timestamp',
-                        'storage-name',
-                        'vserver', 
-                        'lif-address', 
-                        'address'
-                        'volume'
-                    ]
-                # print(nfsSessionData)
-                q.put(nfsSessionData)
-        sleep(pollInterval)
+                    nfsSessionColumns = [
+                            'timestamp',
+                            'storage-name',
+                            'vserver', 
+                            'lif-address', 
+                            'address'
+                            'volume'
+                        ]
+                    # print(nfsSessionData)
+                    q.put(nfsSessionData)
+            sleep(pollInterval)
+        except TypeError:
+            print("TypeErrors ignored")
 
 
 def readNfsClientsQueue(storageSystem):
