@@ -4,7 +4,7 @@ from time import sleep
 import requests
 import base64
 import json
-from csv import writer
+from defusedcsv.csv import writer 
 import logging
 from datetime import datetime, timedelta
 import pandas as pd
