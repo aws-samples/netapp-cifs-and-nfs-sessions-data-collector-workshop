@@ -18,7 +18,8 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-SSL_verify=False
+global SSL_verify
+SSL_VERIFY = False
 
 def getClusterInformation(storageSystem):
     #Variable for Cluster information
@@ -86,11 +87,12 @@ def getNfsClientsData(storageSystem):
         clusterString='/api/protocols/nfs/connected-clients'
         parameters='?return_timeout=25&return_records=true&max_records=10000&idle_duration=PT*'
         try:
-            cNfsClients = requests.get(netapp_storage['url']+clusterString+parameters,
+            cNfsClientsReq = requests.get(netapp_storage['url']+clusterString+parameters,
                             headers=netapp_storage['header'],
                             verify=SSL_VERIFY,
-                            timeout=(5,120)).json()['records']
-            cNfsClients.raise_for_status()
+                            timeout=(5,120))
+            cNfsClientsReq.raise_for_status()
+            cNfsClients = cNfsClientsReq.json()['records']
         except requests.exceptions.HTTPError as e:
             print(f"HTTP Error {e.args[0]}")
 

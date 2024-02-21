@@ -17,6 +17,7 @@ requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+global SSL_VERIFY
 SSL_VERIFY = False
 
 def getClusterInformation(storageSystem):
@@ -84,11 +85,12 @@ def getSessionsData(storageSystem):
         clusterString='/api/protocols/cifs/sessions'
         parameters='?return_timeout=15&return_records=true&max_records=10000'
         try:
-            cSessions = requests.get(netapp_storage['url']+clusterString+parameters,
+            cSessionsReq = requests.get(netapp_storage['url']+clusterString+parameters,
                             headers=netapp_storage['header'],
                             verify=SSL_VERIFY,
-                            timeout=(5, 120)).json()
-            cSessions.raise_for_status()
+                            timeout=(5, 120))
+            cSessionsReq.raise_for_status()
+            cSessions = cSessionsReq.json()
         except requests.exceptions.HTTPError as e:
             print(f"HTTP Error {e.args[0]}")
 
@@ -96,11 +98,12 @@ def getSessionsData(storageSystem):
             sessionData=[]
             sessionLink = record['_links']['self']['href']
             try:
-                sessionResponse = requests.get(netapp_storage['url']+sessionLink,
+                sessionResponseReq = requests.get(netapp_storage['url']+sessionLink,
                                     headers=netapp_storage['header'],
                                     verify=SSL_VERIFY,
-                                    timeout=(5, 120)).json()
+                                    timeout=(5, 120))
                 sessionResponse.raise_for_status()
+                sessionResponse = sessionResponseReq.json()
             except requests.exceptions.HTTPError as e:
                 print(f"HTTP Error {e.args[0]}")
 
@@ -152,11 +155,12 @@ def getFilesData(storageSystem):
         cFileString='/api/protocols/cifs/session/files'
         parameters='?return_timeout=15&return_records=true&max_records=10000'
         try:
-            cFData = requests.get(netapp_storage['url']+cFileString+parameters,
+            cFDataReq = requests.get(netapp_storage['url']+cFileString+parameters,
                         headers=netapp_storage['header'],
                         verify=SSL_VERIFY,
-                        timeout=(5, 120)).json()
-            cFData.raise_for_status()
+                        timeout=(5, 120))
+            cFDataReq.raise_for_status()
+            cFData = cFDataReq.json()
         except requests.exceptions.HTTPError as e:
             print(f"HTTP Error {e.args[0]}")
 
@@ -171,11 +175,12 @@ def getFilesData(storageSystem):
                                     cFRecord['session']['identifier']
                                 )
                     try:
-                        cFDetails.append(requests.get(netapp_storage['url']+cFileString,
+                        cFDetailsReq = requests.get(netapp_storage['url']+cFileString,
                             headers=netapp_storage['header'],
                             verify=SSL_VERIFY,
-                            timeout=(5, 120)).json())
-                        cFDetails.raise_for_status()
+                            timeout=(5, 120))
+                        cFDetailsReq.raise_for_status()
+                        cFDetails.append(cFDetailsReq.json())
                     except requests.exceptions.HTTPError as e:
                         print(f"HTTP Error {e.args[0]}")
         if len(cFDetails) > 0:
