@@ -1,4 +1,4 @@
-# Steps to setup NFS and CIFS Sessions data collector to support storage migrations
+# Steps to setup NetApp CIFS and NFS Sessions data collector to support storage migrations
 
 > Note: This NetApp Data collector solution requires a Linux host with Docker compute engine installed and the container created on this Linux host should be able to connect to https port of the NetApp Storage systems.
 
@@ -54,20 +54,11 @@
 9.  User can now safely logout from this linux host.
 
 ---
-## Follow these steps when using RHEL8.6 VM to connect to on-prem NetApp Storage systems and for Amazon FSx for NetApp ONTAP
+## Follow these steps when using RHEL8.6 instance to connect to on-prem NetApp Storage systems and for Amazon FSx for NetApp ONTAP
 
 1. Uninstall old versions of `docker` or `docker-engine`.
    ```
-   sudo yum remove docker \
-                  docker-client \
-                  docker-client-latest \
-                  docker-common \
-                  docker-latest \
-                  docker-latest-logrotate \
-                  docker-logrotate \
-                  docker-engine \
-                  podman \
-                  runc
+   sudo yum remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine podman runc
    ```
 2. Delete old docker folders
    ```
@@ -90,4 +81,3 @@
 1. SSH to the linux host running **netappcollector** container.
 2. Verify the container is still running with `docker ps` command.
 3. Stop container with `docker stop netappcollector` command and verify again if the container is stopped with `docker ps` command.
-
