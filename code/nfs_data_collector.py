@@ -169,11 +169,6 @@ def split_time_string(time_string):
         return hours*3600+minutes*60+seconds
 
 
-def combineOutputs(storageConfigs):
-    # Dedupe CSV files to summarize by date
-    return True
-
-
 def main():
     # Read the config json file
     with open('/usr/app/input/config_input.json', encoding="utf-8") as f:
@@ -200,11 +195,6 @@ def main():
     for storageSystem in storageList:
         storageSystem['getNfsClientsData'].join()
         storageSystem['readtNfsClientsData'].join()
-
-    combineOutputsThread = threading.Thread(target=combineOutputs,
-                                args=(storageConfigs,))    
-    combineOutputsThread.start()
-    combineOutputsThread.join()
 
 if __name__ == "__main__":
     main()

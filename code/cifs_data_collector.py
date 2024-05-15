@@ -208,7 +208,7 @@ def readSessionsQueue(storageSystem):
         # Create new CSV file for each day
         date = pd.Timestamp(datetime.now()).strftime('%Y%m%d')
         target_folder = f'/usr/app/output/'
-        csvfile = f'{target_folder}/{storageName}_{date}_sessions.csv'    
+        csvfile = f'{target_folder}/{storageName}_{date}_cifs_sessions.csv'    
         if not os.path.isfile(csvfile):
             with open(csvfile, "w", encoding="utf-8") as cf:
                 writer_object = writer(cf)
@@ -241,7 +241,7 @@ def readFilesQueue(storageSystem):
         # Create new CSV file for each day
         date = pd.Timestamp(datetime.now()).strftime('%Y%m%d')
         target_folder = f'/usr/app/output/'
-        csvfile = f'{target_folder}/{storageName}_{date}_filesOpen.csv'  
+        csvfile = f'{target_folder}/{storageName}_{date}_cifs_filesOpen.csv'  
         if not os.path.isfile(csvfile):
             with open(csvfile, "w", encoding="utf-8") as cf:
                 writer_object = writer(cf)
@@ -253,11 +253,6 @@ def readFilesQueue(storageSystem):
         with open(csvfile, "a", encoding="utf-8") as cf:
             writer_object = writer(cf)
             writer_object.writerow(fileData)
-
-
-def combineOutputs(storageConfigs):
-    # Dedupe CSV files to summarize by date
-    return True
 
 
 def main():
@@ -296,12 +291,6 @@ def main():
         storageSystem['getFilesData'].join()
         storageSystem['readSessionsData'].join()
         storageSystem['readFilesData'].join()
-
-    combineOutputsThread = threading.Thread(target=combineOutputs,
-                                args=(storageConfigs,))    
-    combineOutputsThread.start()
-    combineOutputsThread.join()
-
 
 if __name__ == "__main__":
     main()
