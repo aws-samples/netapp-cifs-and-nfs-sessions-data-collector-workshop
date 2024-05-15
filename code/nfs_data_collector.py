@@ -171,7 +171,7 @@ def split_time_string(time_string):
 
 def main():
     # Read the config json file
-    with open('/usr/app/input/config_input.json', encoding="utf-8") as f:
+    with open('/usr/app/input/config.json', encoding="utf-8") as f:
         storageConfigs = json.load(f)
     storageList = storageConfigs['storageList']
     pollInterval = storageConfigs['pollInterval']

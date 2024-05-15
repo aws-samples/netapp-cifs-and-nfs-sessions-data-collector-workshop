@@ -26,7 +26,7 @@
     git clone https://gitlab.aws.dev/atulac/netapp-connected-clients-datacollector
     cd netapp-connected-clients-datacollector
     ```
-6. Add Netapp Storage Name, Username, Password and IP address in the **config_input.json** file in the **input** folder and save the file.
+6. Add Netapp Storage Name, Username, Password and IP address in the **config.json** file in the **input** folder and save the file.
 7. Start NetApp data collector container using **`docker-compose up -d`**.
     ```
     docker-compose up -d
