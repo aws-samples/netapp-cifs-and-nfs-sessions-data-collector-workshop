@@ -115,6 +115,10 @@ def getNfsClientsData(storageSystem, SSL_VERIFY):
             sleep(pollInterval)
         except TypeError:
             print("Ignored results with TypeErrors")
+        except Exception as e:
+            print(f"Error {e}")
+            traceback.print_exc()
+            print(f"No NFS data collected. Retrying in {pollInterval} seconds.")
 
 
 def readNfsClientsQueue(storageSystem):

@@ -103,34 +103,38 @@ def getSessionsData(storageSystem, SSL_VERIFY):
                                     timeout=(5, 120))
                 sessionResponseReq.raise_for_status()
                 sessionResponse = sessionResponseReq.json()
+                for vol in sessionResponse['volumes']:
+                    rounded_dt = pd.Timestamp(datetime.now()).round(f'{pollInterval}s')
+                    time=datetime.strftime(rounded_dt,'%Y%m%d%H%M%S')
+                    sessionData = [
+                        # Time rounded to latest 15th min
+                        time,
+                        storageSystem['Name'],
+                        # Storage Node name (node)
+                        netapp_storage['name'],
+                        # SVM Name (vserver)
+                        sessionResponse['svm']['name'],
+                        # Session Identifier (session-id)
+                        sessionResponse['identifier'],
+                        # Client Identifier (connection-id)
+                        sessionResponse['connection_id'],
+                        # Volume name (volume)
+                        vol['name'],
+                        # SVM IP address (lif-address)
+                        sessionResponse['server_ip'],
+                        # Client IP address (address)
+                        sessionResponse['client_ip'],
+                        # Windows User (windows-user)
+                        sessionResponse['user']
+                    ]
+                    if len(sessionData) > 0:
+                        q.put(sessionData)
             except requests.exceptions.HTTPError as e:
                 print(f"HTTP Error {e.args[0]}")
-            for vol in sessionResponse['volumes']:
-                rounded_dt = pd.Timestamp(datetime.now()).round(f'{pollInterval}s')
-                time=datetime.strftime(rounded_dt,'%Y%m%d%H%M%S')
-                sessionData = [
-                    # Time rounded to latest 15th min
-                    time,
-                    storageSystem['Name'],
-                    # Storage Node name (node)
-                    netapp_storage['name'],
-                    # SVM Name (vserver)
-                    sessionResponse['svm']['name'],
-                    # Session Identifier (session-id)
-                    sessionResponse['identifier'],
-                    # Client Identifier (connection-id)
-                    sessionResponse['connection_id'],
-                    # Volume name (volume)
-                    vol['name'],
-                    # SVM IP address (lif-address)
-                    sessionResponse['server_ip'],
-                    # Client IP address (address)
-                    sessionResponse['client_ip'],
-                    # Windows User (windows-user)
-                    sessionResponse['user']
-                ]
-                if len(sessionData) > 0:
-                    q.put(sessionData)
+            except Exception as e:
+                print(f"Error {e}")
+                traceback.print_exc()
+
         sleep(pollInterval)
 
 
@@ -152,39 +156,44 @@ def getFilesData(storageSystem, SSL_VERIFY):
             print(f"HTTP Error {e.args[0]}")
 
         cFDetails = []
-        if len(cFData['records']) > 0:
-                for cFRecord in cFData['records']:
-                    cFileString="/api/protocols/cifs/session/files/{}/{}/{}/{}/{}".format(
-                                    cFRecord['node']['uuid'], 
-                                    cFRecord['svm']['uuid'], 
-                                    cFRecord['identifier'], 
-                                    cFRecord['connection']['identifier'], 
-                                    cFRecord['session']['identifier']
-                                )
-                    try:
-                        cFDetailsReq = requests.get(netapp_storage['url']+cFileString,
-                            headers=netapp_storage['header'],
-                            verify=SSL_VERIFY,
-                            timeout=(5, 120))
-                        cFDetailsReq.raise_for_status()
-                        cFDetails.append(cFDetailsReq.json())
-                    except requests.exceptions.HTTPError as e:
-                        print(f"HTTP Error {e.args[0]}")
-        if len(cFDetails) > 0:
-            for cFRecord in cFDetails:
-                rounded_dt = pd.Timestamp(datetime.now()).round(f'{pollInterval}s')
-                time=datetime.strftime(rounded_dt,'%Y%m%d%H%M%S')
-                q.put([
-                    time,
-                    storageSystem['Name'],
-                    cFRecord['node']['name'],
-                    cFRecord['svm']['name'],
-                    cFRecord['session']['identifier'],
-                    cFRecord['connection']['identifier'],
-                    cFRecord['volume']['name'],
-                    cFRecord['share']['name'],
-                    cFRecord['path']
-                ])
+        try :
+            if len(cFData['records']) > 0:
+                    for cFRecord in cFData['records']:
+                        cFileString="/api/protocols/cifs/session/files/{}/{}/{}/{}/{}".format(
+                                        cFRecord['node']['uuid'], 
+                                        cFRecord['svm']['uuid'], 
+                                        cFRecord['identifier'], 
+                                        cFRecord['connection']['identifier'], 
+                                        cFRecord['session']['identifier']
+                                    )
+                        try:
+                            cFDetailsReq = requests.get(netapp_storage['url']+cFileString,
+                                headers=netapp_storage['header'],
+                                verify=SSL_VERIFY,
+                                timeout=(5, 120))
+                            cFDetailsReq.raise_for_status()
+                            cFDetails.append(cFDetailsReq.json())
+                        except requests.exceptions.HTTPError as e:
+                            print(f"HTTP Error {e.args[0]}")
+            if len(cFDetails) > 0:
+                for cFRecord in cFDetails:
+                    rounded_dt = pd.Timestamp(datetime.now()).round(f'{pollInterval}s')
+                    time=datetime.strftime(rounded_dt,'%Y%m%d%H%M%S')
+                    q.put([
+                        time,
+                        storageSystem['Name'],
+                        cFRecord['node']['name'],
+                        cFRecord['svm']['name'],
+                        cFRecord['session']['identifier'],
+                        cFRecord['connection']['identifier'],
+                        cFRecord['volume']['name'],
+                        cFRecord['share']['name'],
+                        cFRecord['path']
+                    ])
+        except Exception as e:
+            print(f"Error {e}")
+            traceback.print_exc()
+            print(f"No data collected. Retrying in {pollInterval} seconds.")
         sleep(pollInterval)
 
 
