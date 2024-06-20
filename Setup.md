@@ -79,13 +79,16 @@
    1a6f56c74a33   netappcollector:1.1   "/bin/bash /usr/neta…"   10 seconds ago   Up 4 seconds (health: starting)   0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   netappcollector
    2002208d0524   postgres:alpine3.20   "docker-entrypoint.s…"   10 seconds ago   Up 9 seconds (healthy)            0.0.0.0:5432->5432/tcp, :::5432->5432/tcp   postgres
    ```
-10. User can now safely logout from this linux host.
-11. Start a web browser and connect to this linux host with to port 8080 and on first lauch you will see empty tables as shown in this figure.
-   <img src='./images/first_launch.jpg' width=800>
-12. Click on Add Storage as highlighted to add new NetApp storage systems to fill a form to start data collection and add **Name**, **IP Address**, **Username** and **Password**
-    <img src='./images/add_storage.jpg' width=800>
-13. Navigate to **Home** page to verify the data collection was successful.
-    <img src='./images/home_page.jpg' width=800>
+10. User can now safely logout from this linux host.  
+11. Start a web browser and connect to this linux host with to port 8080 and on first lauch you will see empty tables as shown in this figure.  
+   <img src='./images/first_launch.jpg' width=800>  
+
+12. Click on Add Storage as highlighted to add new NetApp storage systems to fill a form to start data collection and add **Name**, **IP Address**, **Username** and **Password**.  
+    <img src='./images/add_storage.jpg' width=800>  
+
+13. Navigate to **Home** page to verify the data collection was successful.  
+    <img src='./images/home_page.jpg' width=800>  
+
 14. You can now add more storage systems as needed.
 
 ---
