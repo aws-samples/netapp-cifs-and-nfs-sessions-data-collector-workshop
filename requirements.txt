@@ -1,7 +1,0 @@
-requests
-urllib3
-pandas
-matplotlib
-openpyxl
-Pyarrow
-defusedcsv
