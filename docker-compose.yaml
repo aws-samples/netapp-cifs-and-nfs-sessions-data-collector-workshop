@@ -1,16 +1,57 @@
 ---
-version: "3.3"
 services:    
+  database:
+    image: postgres:alpine3.20
+    hostname: postgres
+    container_name: postgres
+    restart: always
+    shm_size: 4gb
+    volumes:
+      - ./database:/var/lib/postgresql/data:rw
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+    env_file:
+      - collector.env
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   data_collector:
-    build: .
-    image: netappcollector:1.0
-    hostname: netappcollector
-    container_name: netappcollector
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    depends_on: 
+      database:
+        condition: service_healthy
+    image: netappcollector:1.1
+    hostname: webserver
+    container_name: webserver
+    restart: always
+    working_dir: /usr/netappcollector/
     read_only: true
     volumes:
-      - ./code:/usr/app/code/:ro
-      - ./input:/usr/app/input:ro
-      - ./output:/usr/app/output:rw
-    entrypoint: /bin/bash /usr/app/code/entrypoint.sh
+      - ./app:/usr/netappcollector/app/:ro
+      - ./commons:/usr/netappcollector/commons:ro
+      - ./logs:/usr/netappcollector/logs/:rw
+      - ./output:/usr/netappcollector/output:rw
+    entrypoint: /bin/bash /usr/netappcollector/commons/entrypoint.sh
+    environment:
+      - PROJECT_HOME=/usr/netappcollector/
+      - POSTGRES_HOSTNAME=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_DATABASE=postgres
+    env_file:
+      - collector.env
     security_opt:
       - no-new-privileges:true
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:8080"]
+      interval: 5s
+      timeout: 5s
+      retries: 5

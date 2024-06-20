@@ -1,0 +1,13 @@
+pandas
+requests
+seaborn
+streamlit
+st-annotated-text
+urllib3
+openpyxl
+tabulate
+pypdf
+SQLAlchemy
+cryptography
+defusedcsv
+psycopg2-binary
