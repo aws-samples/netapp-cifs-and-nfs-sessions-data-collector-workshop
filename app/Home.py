@@ -31,7 +31,7 @@ st.set_page_config(
     layout='wide'
     
     )
-st.title("Add NetApp Storage system to data collector")
+st.title("NetApp Storage CIFS and NFS clients")
 
 
 def main():

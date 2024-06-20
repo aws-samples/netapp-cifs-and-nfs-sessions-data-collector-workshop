@@ -23,61 +23,75 @@
 4. Verify the docker-compose is installed and is same or higher than version *v2.27.0* using this command `docker-compose -v`. (Docker Compose version v2.27.0)
 5. Clone this git repository to this linux host and change directory to the cloned folder.
     ```
-    git clone https://gitlab.aws.dev/atulac/netapp-connected-clients-datacollector
-    cd netapp-connected-clients-datacollector
+    git clone https://github.com/aws-samples/netapp-cifs-and-nfs-sessions-data-collector-workshop
+    cd netapp-cifs-and-nfs-sessions-data-collector-workshop
     ```
-6. Add Netapp Storage Name, Username, Password and IP address in the **config.json** file in the **input** folder and save the file.
+   These should be the files present in the folder:
+   ```
+   ├── README.md
+   ├── Setup.md
+   ├── app
+   │   ├── Dockerfile
+   │   ├── Home.py
+   │   ├── pages
+   │   │   ├── 1_CIFS_and_NFS_Sessions_Report.py
+   │   │   └── 99_Add_storage.py
+   │   └── requirements.txt
+   ├── collector.env
+   ├── commons
+   │   ├── __init__.py
+   │   ├── database.py
+   │   ├── encryptionKey.py
+   │   ├── entrypoint.sh
+   │   ├── netappCollector.py
+   │   ├── setupDb.py
+   │   └── streamlitDfs.py
+   ├── database
+   ├── docker-compose.yaml
+   ├── logs
+   │   ├── app.log
+   │   ├── collector.log
+   │   └── database.log
+   └── output
+   ```
+6. Update the **collector.env** file: 
+   1. Set SSL_VERIFY to `False`
+   2. Set a secure string as `POSTGRES_PASSWORD`
+   3. Set `DATA_COLLECTION_INTERVAL` to 600 or higher. This is refersh interval in seconds to query NetApp Storage systems to collect NFS clients and CIFS sessions details.
+   ```
+   SSL_VERIFY=False
+   POSTGRES_PASSWORD=P0stGr3sP@ss
+   DATA_COLLECTION_INTERVAL=600
+   ```
 7. Start NetApp data collector container using **`docker-compose up -d`**.
     ```
     docker-compose up -d
-    ```
-   > [+] Running 2/0  
-   > ✔ Network netapp-connected-clients-datacollector-main_default  
-   > Created                                           0.0s  
-   > ✔ Container netappcollector  
-   > Created                                           0.0s  
-   > Attaching to netappcollector  
-   > netappcollector  | + pid=0  
-   > netappcollector  | + trap 'kill ${!}; term_handler' SIGTERM  
-   > netappcollector  | + pid=8  
-   > netappcollector  | + true  
-   > netappcollector  | + /bin/python3 /usr/app/code/nfs_data_collector.py  
-   > netappcollector  | + wait 9  
-   > netappcollector  | + sleep infinity  
-   > netappcollector  | + /bin/python3 /usr/app/code/smb_data_collector.py  
-   
-8. Check the running containers and list files in **output** folder and view the trailing output as needed.
+    ```   
+8. Check the running containers and verify an ecryption.key is created in **output** folder.
    ```bash
    docker ps
    ls -lh output/
    ```
-9.  User can now safely logout from this linux host.
-
----
-## Follow these steps when using RHEL8.6 instance to connect to on-prem NetApp Storage systems and for Amazon FSx for NetApp ONTAP
-
-1. Uninstall old versions of `docker` or `docker-engine`.
+9. Docker ps command shows Postgres database running and listening on port `5432` and netappcollector running and listening on port `8080`.
    ```
-   sudo yum remove docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine podman runc
+   docker ps
+   CONTAINER ID   IMAGE                 COMMAND                  CREATED          STATUS                            PORTS                                       NAMES
+   1a6f56c74a33   netappcollector:1.1   "/bin/bash /usr/neta…"   10 seconds ago   Up 4 seconds (health: starting)   0.0.0.0:8080->8080/tcp, :::8080->8080/tcp   netappcollector
+   2002208d0524   postgres:alpine3.20   "docker-entrypoint.s…"   10 seconds ago   Up 9 seconds (healthy)            0.0.0.0:5432->5432/tcp, :::5432->5432/tcp   postgres
    ```
-2. Delete old docker folders
-   ```
-   sudo rm -rf /var/lib/docker
-   ``` 
-3. Add Docker CE yum repository to yum-config-manager
-   ```
-   sudo yum install -y yum-utils
-   sudo yum-config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
-   ```
-4. Install latest docker engine and accept the GPG key when prompted
-   ```
-   sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-   ```
-5. Follow rest of the instruction 2 through 9 as listed above [when using Amazon Linux EC2 instance](#follow-these-steps-when-using-amazon-linux-ec2-instance-to-connect-to-on-prem-netapp-storage-systems-and-for-amazon-fsx-for-netapp-ontap)
+10. User can now safely logout from this linux host.
+11. Start a web browser and connect to this linux host with to port 8080 and on first lauch you will see empty tables as shown in this figure.
+   <img src='./images/first_launch.jpg' width=800>
+12. Click on Add Storage as highlighted to add new NetApp storage systems to fill a form to start data collection and add **Name**, **IP Address**, **Username** and **Password**
+    <img src='./images/add_storage.jpg' width=800>
+13. Navigate to **Home** page to verify the data collection was successful.
+    <img src='./images/home_page.jpg' width=800>
+14. You can now add more storage systems as needed.
 
 ---
 # Stopping data collection
 
-1. SSH to the linux host running **netappcollector** container.
+1. SSH to the linux host.
 2. Verify the container is still running with `docker ps` command.
-3. Stop container with `docker stop netappcollector` command and verify again if the container is stopped with `docker ps` command.
+3. Change directory to `netapp-cifs-and-nfs-sessions-data-collector-workshop`.
+4. Run `docker-compose down` command to stop containers and data collection.

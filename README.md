@@ -32,13 +32,9 @@ To be able to run this solution, you will need:
     }
     ```
 
-- This sequence diagram summarizes the data collection workflow and the processes that run in the data collector container.  
-  <img src='./images/NFS and CIFS Sessions data collector to support storage migrations.png' alt='Data collection sequence' width='800'>
-
 ## Next steps
 
 Follow the steps listed in this [setup guide](./Setup.md) to start the data collection and start planning your next storage migration to Amazon FSx for NetApp ONTAP.
-
 
 ---
 
