@@ -103,13 +103,13 @@ def create_indexes(engine, volSessions):
 
 
 if __name__ == '__main__':
-    db = {}
-    db['db_host'] = os.environ['POSTGRES_HOSTNAME']
-    db['db_port'] = os.environ['POSTGRES_PORT']
-    db['db_name'] = os.environ['POSTGRES_DATABASE']
-    db['db_user'] = os.environ['POSTGRES_USER']
-    db['db_password'] = os.environ['POSTGRES_PASSWORD']
-
+    db = {
+        'db_host':os.environ['POSTGRES_HOSTNAME'],
+        'db_port':os.environ['POSTGRES_PORT'],
+        'db_name':os.environ['POSTGRES_DATABASE'],
+        'db_user':os.environ['POSTGRES_USER'],
+        'db_password':os.environ['POSTGRES_PASSWORD']
+    }
     password = quote_plus(db['db_password'])
     engine = create_engine(f"postgresql://{db['db_user']}:{password}@{db['db_host']}/{db['db_name']}")
 

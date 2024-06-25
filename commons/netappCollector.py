@@ -220,12 +220,13 @@ def get_nfs_clients_data(conn, cursor, storage_system, SSL_VERIFY):
 
 
 def main():
-    db = {}
-    db['db_host'] = os.environ['POSTGRES_HOSTNAME']
-    db['db_port'] = int(os.environ['POSTGRES_PORT'])
-    db['db_name'] = os.environ['POSTGRES_DATABASE']
-    db['db_user'] = os.environ['POSTGRES_USER']
-    db['db_password'] = os.environ['POSTGRES_PASSWORD']
+    db = {
+        'db_host':os.environ['POSTGRES_HOSTNAME'],
+        'db_port':os.environ['POSTGRES_PORT'],
+        'db_name':os.environ['POSTGRES_DATABASE'],
+        'db_user':os.environ['POSTGRES_USER'],
+        'db_password':os.environ['POSTGRES_PASSWORD']
+    }
     fernet_key = encryptionKey.get_key()
 
     while True:
