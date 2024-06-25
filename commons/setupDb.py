@@ -2,38 +2,104 @@ import os
 import sys
 sys.path.append(os.environ['PROJECT_HOME'])
 
-from commons.database import pgDb
+from sqlalchemy import create_engine, Column, String, TIMESTAMP, Table, Index, MetaData, LargeBinary
+from sqlalchemy.orm import declarative_base, Session
+from sqlalchemy.exc import ProgrammingError
+from urllib.parse import quote_plus
 
-import traceback
-import psycopg2
+
+# Create a base class for declarative models
+Base = declarative_base()
 
 
-def create_tables(db):
-    conn, cursor = pgDb.get_db_cursor(db=db)
+# Class for sessions table with columns and their types as created in Postgres database.
+class volSessions(Base):
+    __tablename__ = 'sessions'
+    timestamp = Column(TIMESTAMP(), primary_key=True)
+    storage = Column(String())
+    vserver = Column(String())
+    lifaddress = Column(String())
+    server = Column(String())
+    volume = Column(String())
+    username = Column(String())
+    protocol = Column(String())
 
-    # Create a table to store NFS and CIFS sessions
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS  public.sessions (
-            timestamp timestamp,
-            storage TEXT NOT NULL,
-            vserver TEXT NOT NULL,
-            lifaddress TEXT NOT NULL,
-            server TEXT NOT NULL,
-            volume TEXT NOT NULL,
-            username TEXT NOT NULL,
-            protocol TEXT NOT NULL
-        );
 
-        CREATE TABLE public.storageconfigs (
-            storagename varchar NOT NULL,
-            storageip varchar NOT NULL,
-            storageuser varchar NOT NULL,
-            storagepassword bytea NOT NULL,
-            CONSTRAINT storageconfigs_pk PRIMARY KEY (storagename)
-        );
-                   
-    """)
-    conn.commit()
+# Class for storageconfigs table with columns and their types as created in Postgres database.
+class storage(Base):
+    __tablename__ = 'storageconfigs'
+    storagename = Column(String(), primary_key=True)
+    storageip = Column(String())
+    storageuser = Column(String())
+    storagepassword = Column(String())
+
+
+def create_tables(engine):
+    try:
+        Table(
+            'storageconfigs', 
+            MetaData(),
+            Column('storagename', String()),
+            Column('storageip', String()),
+            Column('storageuser', String()),
+            Column('storagepassword', LargeBinary)
+        ).create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            print("Table storageconfigs already exists. No action needed.")
+            
+
+    try:
+        Table(
+            'sessions', 
+            MetaData(),
+            Column('timestamp', TIMESTAMP),
+            Column('storage', String()),
+            Column('vserver', String()),
+            Column('lifaddress', String()),
+            Column('server', String()),
+            Column('volume', String()),
+            Column('username', String()),
+            Column('protocol', String())
+        ).create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            print("Table sessions already exists. No action needed.")
+
+
+def create_indexes(engine, volSessions):
+    idx_servers = Index('idx_servers', volSessions.server)
+    idx_volumes = Index('idx_volumes', volSessions.volume)
+    idx_usernames = Index('idx_usernames', volSessions.username)
+    idx_srv_vol_user = Index('idx_srv_vol_user', volSessions.server, volSessions.volume, volSessions.username)
+
+    try:
+        idx_servers.create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            print("Index idx_servers already exists. No action needed.")
+
+    try:
+        idx_volumes.create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            print("Index idx_volumes already exists. No action needed.")
+
+    try:
+        idx_usernames.create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            raise
+        else:
+            print("Index idx_usernames already exists. No action needed.")
+
+    try:
+        idx_srv_vol_user.create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            raise
+        else:
+            print("Index idx_srv_vol_user already exists. No action needed.")
 
 
 if __name__ == '__main__':
@@ -44,12 +110,11 @@ if __name__ == '__main__':
     db['db_user'] = os.environ['POSTGRES_USER']
     db['db_password'] = os.environ['POSTGRES_PASSWORD']
 
-    try:
-        create_tables(db)
-        print('Database tables created.')
-    except psycopg2.errors.DuplicateTable:
-        print('Tables already exists. No action needed.')
-    except Exception as e:
-        print(e)
-        traceback.print_exc()
-        print('Failed to create tables.')
+    password = quote_plus(db['db_password'])
+    engine = create_engine(f"postgresql://{db['db_user']}:{password}@{db['db_host']}/{db['db_name']}")
+
+    # Create a session
+    session = Session(engine)
+
+    create_tables(engine)
+    create_indexes(engine, volSessions)
