@@ -49,7 +49,8 @@ def main():
 
     ## Show the storge systems configured
     with st.sidebar.container(border=True):
-        st.dataframe(stContainersDf.get_configured_storage(cursor=cursor)[['Name','StorageIP']], hide_index=True, use_container_width=True)
+        sidebar_storage_df = stContainersDf.get_configured_storage(cursor=cursor)[['Name', 'StorageIP', 'CollectData']]
+        st.dataframe(sidebar_storage_df, hide_index=True, use_container_width=True)
 
     ## Show the range of timestamps of the data collected.
     time_last, time_first, sessionserver_count = stContainersDf.get_sessions_details(cursor=cursor)[0]

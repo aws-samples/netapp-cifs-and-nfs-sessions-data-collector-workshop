@@ -35,7 +35,7 @@
    │   ├── Home.py
    │   ├── pages
    │   │   ├── 1_CIFS_and_NFS_Sessions_Report.py
-   │   │   └── 99_Add_storage.py
+   │   │   └── 99_Manage_storage_systems.py
    │   └── requirements.txt
    ├── collector.env
    ├── commons
@@ -85,7 +85,7 @@
 11. Start a web browser and connect to this linux host to port 8080. On first lauch you will see empty tables as shown in this figure below:  
    <img src='./images/first_launch.jpg' width=800>  
 
-12. Now click on Add Storage as highlighted to add new NetApp storage systems.  
+12. Now click on *`Manage storage systems`* as highlighted to add new NetApp storage systems.  
 
 13. Fill the form with NetApp Storage Details - **Name**, **IP Address**, **Username** and **Password**.  
     <img src='./images/add_storage.jpg' width=800>  
@@ -93,7 +93,10 @@
 14. Navigate to **Home** page to verify the data collection was successful.  
     <img src='./images/home_page.jpg' width=800>  
 
-15. Add storage systems as needed.  
+15. You can pause data collection for any storage system added to the data collector by navigating to `*Manage storage systems*` page and clicking on the toggle switch next to the **Storage Name**.
+    <img src='./images/manage_storage_data_collection.jpg' width=800>
+
+16. Add storage systems as needed.  
 
 ---
 # Stopping data collection

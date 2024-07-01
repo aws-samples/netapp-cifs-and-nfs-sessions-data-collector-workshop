@@ -237,13 +237,14 @@ def main():
 
         # Collect data for each Storage configured
         for index, storage in storage_list_df.iterrows():
-            storage_system = {'Name':storage['Name'], 'Address':storage['StorageIP'], 'Credentials':[storage['StorageUser'], fernet_key.decrypt(storage['StoragePassEnc'].tobytes()).decode()]}
-            storage_system['netapp_storage'] = get_cluster_information(storage_system, SSL_VERIFY)
-            storage_system['get_cifs_sessions_data'] = threading.Thread(target=get_cifs_sessions_data, args=(conn, cursor, storage_system, SSL_VERIFY,))
-            storage_system['get_nfs_clients_data'] = threading.Thread(target=get_nfs_clients_data, args=(conn, cursor, storage_system, SSL_VERIFY,))
-            storage_system['get_cifs_sessions_data'].start()
-            storage_system['get_nfs_clients_data'].start()
-            storage_list.append(storage_system)
+            if storage['CollectData']:
+                storage_system = {'Name':storage['Name'], 'Address':storage['StorageIP'], 'Credentials':[storage['StorageUser'], fernet_key.decrypt(storage['StoragePassEnc'].tobytes()).decode()], 'CollectData':storage['CollectData']}
+                storage_system['netapp_storage'] = get_cluster_information(storage_system, SSL_VERIFY)
+                storage_system['get_cifs_sessions_data'] = threading.Thread(target=get_cifs_sessions_data, args=(conn, cursor, storage_system, SSL_VERIFY,))
+                storage_system['get_nfs_clients_data'] = threading.Thread(target=get_nfs_clients_data, args=(conn, cursor, storage_system, SSL_VERIFY,))
+                storage_system['get_cifs_sessions_data'].start()
+                storage_system['get_nfs_clients_data'].start()
+                storage_list.append(storage_system)
 
         sleep(POLL_INTERVAL)
 
