@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append(os.environ['PROJECT_HOME'])
 
-from sqlalchemy import create_engine, Column, String, TIMESTAMP, Table, Index, MetaData, LargeBinary
+from sqlalchemy import create_engine, Column, String, TIMESTAMP, Table, Index, MetaData, LargeBinary, Boolean
 from sqlalchemy.orm import declarative_base, Session
 from sqlalchemy.exc import ProgrammingError
 from urllib.parse import quote_plus
@@ -42,7 +42,8 @@ def create_tables(engine):
             Column('storagename', String()),
             Column('storageip', String()),
             Column('storageuser', String()),
-            Column('storagepassword', LargeBinary)
+            Column('storagepassword', LargeBinary),
+            Column('collectdata', Boolean, default=True, nullable=False)
         ).create(bind=engine)
     except ProgrammingError as e:
         if "already exists" not in str(e):

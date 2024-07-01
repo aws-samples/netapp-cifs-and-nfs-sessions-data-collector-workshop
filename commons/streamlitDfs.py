@@ -9,7 +9,7 @@ class stContainersDf:
                 SELECT * FROM storageconfigs s ORDER by s.storagename;
             """)
             storage_list = cursor.fetchall()
-            storage_df = pd.DataFrame(storage_list, columns=['Name', 'StorageIP', 'StorageUser', 'StoragePassEnc'])
+            storage_df = pd.DataFrame(storage_list, columns=['Name', 'StorageIP', 'StorageUser', 'StoragePassEnc', 'CollectData'])
             return storage_df
         except Exception as e:
             return traceback.format_exc()

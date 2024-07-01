@@ -29,12 +29,12 @@ SSL_VERIFY = os.environ['SSL_VERIFY'].upper() == 'TRUE'
 
 
 st.set_page_config(
-    page_title="Add NetApp Storage system",
+    page_title="Manage Storage systems",
     page_icon="🏠",
     initial_sidebar_state="expanded",
     layout='wide'
     )
-st.title("Add NetApp Storage system to data collector")
+st.title("Manage Storage systems data collection")
 
 
 def verify_add_storage_form(fernet_key, data):
@@ -77,10 +77,10 @@ def main():
 
     # Show Configured storage systems in Sidebar
     with st.sidebar.container(border=True):
-        sidebar_storage_df = stContainersDf.get_configured_storage(cursor=cursor)[['Name', 'StorageIP']]
+        sidebar_storage_df = stContainersDf.get_configured_storage(cursor=cursor)[['Name', 'StorageIP', 'CollectData']]
         st.dataframe(sidebar_storage_df, hide_index=True, use_container_width=True)
 
-    col11, col12, col13 = st.columns([5, 10, 5])
+    col11, col12, col13, col14 = st.columns([1, 8, 5, 4])
     with col11:
         st.empty()
 
@@ -102,7 +102,8 @@ def main():
                                 "storage_name":storage_name, 
                                 "storage_ip":storage_ip, 
                                 "storage_user":storage_user, 
-                                "storage_password":fernet_key.encrypt(storage_password.encode())
+                                "storage_password":fernet_key.encrypt(storage_password.encode()),
+                                "collectdata" : True
                             }
                             if verify_add_storage_form(data=formData, fernet_key=fernet_key):
                                 pgDb.store_storage_config(conn=conn, cursor=cursor, data=formData)
@@ -114,9 +115,32 @@ def main():
                         except (pg.errors.UniqueViolation, pg.errors.IntegrityError) as e:
                             st.error(e.pgerror.split('DETAIL:  Key ')[1])
 
+    def update_storage_collection(conn, cursor, storage):
+        data = {
+            'collectdata' : st.session_state[storage['Name']],
+            'storagename' : storage['Name']
+        }
+        pgDb.update_storage_collection(conn, cursor, data)
+        return storage
     with col13:
-        st.empty()
+        with st.container(border=True):
+            st.subheader("Update data collection")
+            for storage in  sidebar_storage_df.iterrows():
+                if storage[1]['CollectData']:
+                    collection_label = f":green[{storage[1]['Name'].upper()}] data collection :green[ENABLED]"
+                else:
+                    collection_label = f":orange[{storage[1]['Name'].upper()}] data collection :orange[DISABLED]"
 
+                st.toggle(
+                    collection_label, 
+                    key=storage[1]['Name'], 
+                    value=storage[1]['CollectData'],
+                    on_change=update_storage_collection,
+                    kwargs={"conn":conn, "cursor":cursor, 'storage':storage[1]}
+                )
+
+    with col14:
+        st.empty()
 if __name__ == "__main__":
     main()
 

@@ -46,14 +46,28 @@ class pgDb:
             None
         """
         cursor.execute(f"""
-            INSERT INTO public.storageconfigs (storagename, storageip, storageuser, storagepassword)
+            INSERT INTO public.storageconfigs (storagename, storageip, storageuser, storagepassword, collectdata)
             VALUES (
                 '{data['storage_name']}', 
                 '{data['storage_ip']}', 
                 '{data['storage_user']}', 
-                {pg.Binary(data['storage_password'])}
+                {pg.Binary(data['storage_password'])},
+                {data['collectdata']}
             )
         """)
         conn.commit()
 
+
+    def update_storage_collection(conn, cursor, data):
+        query=f"""
+            UPDATE 
+                public.storageconfigs 
+            SET 
+                collectdata={data['collectdata']} 
+            WHERE 
+                storagename='{data['storagename']}';
+        """
+        print(query)
+        cursor.execute(query)
+        conn.commit()
 
