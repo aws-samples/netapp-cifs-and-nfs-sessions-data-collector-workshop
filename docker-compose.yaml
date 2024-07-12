@@ -25,7 +25,7 @@ services:
     depends_on: 
       database:
         condition: service_healthy
-    image: public.ecr.aws/v6d1f8t5/fsxnofferingartifacts/netappcollector:1.01
+    image: public.ecr.aws/v6d1f8t5/fsxnofferingartifacts/netappcollector:1.02
     hostname: webserver
     container_name: webserver
     restart: always
