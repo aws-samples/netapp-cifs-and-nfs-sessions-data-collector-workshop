@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # Use REST API to collect and store NFS, and CIFS sessions data from NetApp storage arrays, where data is saved in a Sqlite database file locally.
-# Daily a new file is created for every storage system.
 # Credentials file should be in this format:
 # {
 #     "POLL_INTERVAL" : 900,
