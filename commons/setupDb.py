@@ -2,11 +2,11 @@ import os
 import sys
 sys.path.append(os.environ['PROJECT_HOME'])
 
-from sqlalchemy import create_engine, Column, String, TIMESTAMP, Table, Index, MetaData, LargeBinary, Boolean
+from sqlalchemy import create_engine, Column, String, TIMESTAMP, Table, Index, MetaData, LargeBinary, Boolean, select
 from sqlalchemy.orm import declarative_base, Session
-from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.exc import ProgrammingError, IntegrityError
 from urllib.parse import quote_plus
-
+from commons.encryptionKey import encryptionKey
 
 # Create a base class for declarative models
 Base = declarative_base()
@@ -34,7 +34,24 @@ class storage(Base):
     storagepassword = Column(String())
 
 
+class User(Base):
+    __tablename__ = 'users'
+    username = Column(String, primary_key=True)
+    password = Column(String)
+
+
 def create_tables(engine):
+    try:
+        Table(
+            'users', 
+            MetaData(),
+            Column('username', String()),
+            Column('password', LargeBinary),
+        ).create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            print("Table users already exists. No action needed.")
+
     try:
         Table(
             'storageconfigs', 
@@ -49,7 +66,6 @@ def create_tables(engine):
         if "already exists" not in str(e):
             print("Table storageconfigs already exists. No action needed.")
             
-
     try:
         Table(
             'sessions', 
@@ -103,6 +119,26 @@ def create_indexes(engine, volSessions):
             print("Index idx_srv_vol_user already exists. No action needed.")
 
 
+def create_default_user(username, password):
+    fernet_key = encryptionKey.get_key()
+    try:
+        existing_user = session.query(User).filter(User.username == username).first()
+        if existing_user is None:
+            new_user = User(
+                username=username, 
+                password=fernet_key.encrypt(password.encode())
+            )
+            session.add(new_user)
+            session.commit()
+            return new_user, "User created successfully"
+        else:
+            return existing_user, "User already exists"            
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
+
 if __name__ == '__main__':
     db = {
         'db_host':os.environ['POSTGRES_HOSTNAME'],
@@ -119,3 +155,10 @@ if __name__ == '__main__':
 
     create_tables(engine)
     create_indexes(engine, volSessions)
+
+    try:
+        user, message = create_default_user(username=os.environ['DECIPHER_USERNAME'], password=os.environ['DECIPHER_PASSWORD'])
+        print(message)
+    except Exception as e:
+        print(f"Error: {e}")
+

@@ -6,6 +6,7 @@ sys.path.append(os.environ['PROJECT_HOME'])
 from commons.database import pgDb
 from commons.streamlitDfs import stContainersDf
 from commons.encryptionKey import encryptionKey
+from commons.auth import userAuth
 from commons.netappCollector import get_cluster_information, get_cifs_sessions_data, get_nfs_clients_data
 
 
@@ -64,6 +65,7 @@ def verify_add_storage_form(fernet_key, data):
 
 
 def main():
+    fernet_key = encryptionKey.get_key()
     db = {
         'db_host':os.environ['POSTGRES_HOSTNAME'],
         'db_port':os.environ['POSTGRES_PORT'],
@@ -71,9 +73,39 @@ def main():
         'db_user':os.environ['POSTGRES_USER'],
         'db_password':os.environ['POSTGRES_PASSWORD']
     }
-    fernet_key = encryptionKey.get_key()
+    # Using Streamlit cache for Database connection resource
+    @st.cache_resource
+    def get_conn_cursor(db):
+        conn, cursor = pgDb.get_db_cursor(db=db)
+        return conn, cursor
 
-    conn, cursor = pgDb.get_db_cursor(db=db)
+    conn, cursor = get_conn_cursor(db)
+    # conn, cursor = pgDb.get_db_cursor(db=db)
+
+
+    # Check authentication
+    if not st.session_state.get('authenticated'):
+        st.warning("Please login to continue.")
+        with st.sidebar:
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            if st.button("Login"):
+                user_authenticated = userAuth.verify_user(cursor, username, password, fernet_key)
+                # if verify_user(username, password):
+                if user_authenticated:
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.success("Logged in successfully!")
+                    st.rerun()
+                else:
+                    st.error("Invalid username or password")
+        st.stop()
+    else:
+        with st.sidebar:
+            st.success(f"Logged in as {st.session_state.username}")
+            if st.button("Logout"):
+                st.session_state.authenticated = False
+                st.rerun()
 
     # Show Configured storage systems in Sidebar
     with st.sidebar.container(border=True):
