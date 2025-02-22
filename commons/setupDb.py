@@ -119,7 +119,7 @@ def create_indexes(engine, volSessions):
             print("Index idx_srv_vol_user already exists. No action needed.")
 
 
-def create_default_user(username, password):
+def create_decipher_user(username, password):
     fernet_key = encryptionKey.get_key()
     try:
         existing_user = session.query(User).filter(User.username == username).first()
@@ -157,7 +157,8 @@ if __name__ == '__main__':
     create_indexes(engine, volSessions)
 
     try:
-        user, message = create_default_user(username=os.environ['DECIPHER_USERNAME'], password=os.environ['DECIPHER_PASSWORD'])
+        user, message = create_decipher_user(username='admin', password=os.environ['DECIPHER_ADMIN_PASSWORD'])
+        user, message = create_decipher_user(username=os.environ['DECIPHER_USERNAME'], password=os.environ['DECIPHER_PASSWORD'])
         print(message)
     except Exception as e:
         print(f"Error: {e}")
