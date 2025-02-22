@@ -129,7 +129,7 @@ def manage_storage_systems(fernet_key, conn, cursor):
     with col14:
         st.empty()
 
-def verify_user_access(conn, cursor, fernet_key):
+def verify_user_login(conn, cursor, fernet_key):
     # Check authentication
     if st.session_state.get('authenticated'):
         with st.sidebar:
@@ -145,7 +145,6 @@ def verify_user_access(conn, cursor, fernet_key):
             password = st.text_input("Password", type="password")
             if st.button("Login"):
                 user_authenticated = userAuth.verify_user(cursor, username, password, fernet_key)
-                # if verify_user(username, password):
                 if user_authenticated:
                     st.session_state.authenticated = True
                     st.session_state.username = username
@@ -154,11 +153,12 @@ def verify_user_access(conn, cursor, fernet_key):
                 else:
                     st.error("Invalid username or password")
         return False
-        # st.stop()
 
-def admin_access():
+def verify_admin_access():
     # Verify Admin user
     if st.session_state.username == 'admin':
+        # Enable admin access
+        st.info("Admin access enabled.")
         return True
     else:
         st.warning("Access restricted. Login as Admin user.")
@@ -182,8 +182,7 @@ def main():
     conn, cursor = get_conn_cursor(db)
     # conn, cursor = pgDb.get_db_cursor(db=db)
 
-    if verify_user_access(conn, cursor, fernet_key) and admin_access():
-        st.info("Welcome Admin!")
+    if verify_user_login(conn, cursor, fernet_key) and verify_admin_access():
         manage_storage_systems(fernet_key, conn, cursor)
     else:
         st.stop()
