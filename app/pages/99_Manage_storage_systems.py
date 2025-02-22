@@ -149,7 +149,6 @@ def main():
     conn, cursor = get_conn_cursor(db)
     # conn, cursor = pgDb.get_db_cursor(db=db)
 
-
     # Check authentication
     if not st.session_state.get('authenticated'):
         st.warning("Please login to continue.")
