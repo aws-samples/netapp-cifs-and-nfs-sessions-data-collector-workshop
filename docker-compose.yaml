@@ -1,7 +1,7 @@
 ---
 services:    
   database:
-    image: postgres:alpine3.20
+    image: public.ecr.aws/v6d1f8t5/fsxnofferingartifacts/postgres:alpine3.20
     hostname: postgres
     container_name: postgres
     restart: always
@@ -22,11 +22,10 @@ services:
   data_collector:
     build:
       context: ./app
-      dockerfile: Dockerfile
     depends_on: 
       database:
         condition: service_healthy
-    image: netappcollector:1.1
+    image: public.ecr.aws/v6d1f8t5/fsxnofferingartifacts/netappcollector:1.02
     hostname: webserver
     container_name: webserver
     restart: always
