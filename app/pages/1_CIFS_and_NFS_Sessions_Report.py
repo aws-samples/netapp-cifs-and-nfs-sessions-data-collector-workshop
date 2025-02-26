@@ -5,6 +5,8 @@ sys.path.append(os.environ['PROJECT_HOME'])
 
 from commons.database import pgDb
 from commons.streamlitDfs import stContainersDf
+from commons.encryptionKey import encryptionKey
+from commons.auth import userAuth
 
 import psycopg2 as pg
 import pandas as pd
@@ -28,9 +30,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     layout='wide'    
     )
-
+st.title("CIFS & NFS Sessions :: Table")
 
 def main():
+    fernet_key = encryptionKey.get_key()
     db = {
         'db_host':os.environ['POSTGRES_HOSTNAME'],
         'db_port':os.environ['POSTGRES_PORT'],
@@ -38,8 +41,6 @@ def main():
         'db_user':os.environ['POSTGRES_USER'],
         'db_password':os.environ['POSTGRES_PASSWORD']
     }
-
-
     # Using Streamlit cache for Database connection resource
     @st.cache_resource
     def get_conn_cursor(db):
@@ -47,6 +48,33 @@ def main():
         return conn, cursor
 
     conn, cursor = get_conn_cursor(db)
+    # conn, cursor = pgDb.get_db_cursor(db=db)
+
+    
+    # Check authentication
+    if not st.session_state.get('authenticated'):
+        st.warning("Please login to continue.")
+        with st.sidebar:
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            if st.button("Login"):
+                user_authenticated = userAuth.verify_user(cursor, username, password, fernet_key)
+                # if verify_user(username, password):
+                if user_authenticated:
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.success("Logged in successfully!")
+                    st.rerun()
+                else:
+                    st.error("Invalid username or password")
+        st.stop()
+    else:
+        with st.sidebar:
+            st.success(f"Logged in as {st.session_state.username}")
+            if st.button("Logout"):
+                st.session_state.authenticated = False
+                st.rerun()
+
 
     if 'sessions_limit' not in st.session_state and 'sessions_offset' not in st.session_state:
         st.session_state.sessions_page_num = 1
@@ -101,7 +129,7 @@ def main():
     if not selected_protocols:
         st.sidebar.error("Please select at least one protocol.")
 
-    st.title(f"{' & '.join(selected_protocols)} Sessions :: Table")
+    
 
     if selected_address and selected_volumes and selected_protocols and selected_storage and selected_protocols:
         st.session_state.time_first, st.session_state.time_last, st.session_state.selected_count = stContainersDf.get_filtered_sessions_details(cursor=cursor, storage_list=selected_storage, server_list=selected_address, volume_list=selected_volumes, protocol_list=selected_protocols)

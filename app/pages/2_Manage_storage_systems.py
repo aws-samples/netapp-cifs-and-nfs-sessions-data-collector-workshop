@@ -6,6 +6,7 @@ sys.path.append(os.environ['PROJECT_HOME'])
 from commons.database import pgDb
 from commons.streamlitDfs import stContainersDf
 from commons.encryptionKey import encryptionKey
+from commons.auth import userAuth
 from commons.netappCollector import get_cluster_information, get_cifs_sessions_data, get_nfs_clients_data
 
 
@@ -36,14 +37,14 @@ st.set_page_config(
     )
 st.title("Manage Storage systems data collection")
 
-
-def verify_add_storage_form(fernet_key, data):
+def add_storage(fernet_key, data):
     for key in data.keys():
         if data[key] == None or data[key] == "" or data[key] == False:
             st.error(f"Please fill all fields. Missing value in : {key}")
             return False
     try:
         get_cluster_information({'Address':data['storage_ip'], 'Credentials':[data['storage_user'], fernet_key.decrypt(data['storage_password']).decode()]}, SSL_VERIFY=SSL_VERIFY)
+        return True
     except requests.exceptions.ConnectTimeout as rcte:
         st.error(f"Connect Timeout error occured. Check network reachability to {rcte.request.url}")
         return False
@@ -60,21 +61,8 @@ def verify_add_storage_form(fernet_key, data):
         st.write(e)
         st.error("Unknown error occured.")
         return False
-    return True
 
-
-def main():
-    db = {
-        'db_host':os.environ['POSTGRES_HOSTNAME'],
-        'db_port':os.environ['POSTGRES_PORT'],
-        'db_name':os.environ['POSTGRES_DATABASE'],
-        'db_user':os.environ['POSTGRES_USER'],
-        'db_password':os.environ['POSTGRES_PASSWORD']
-    }
-    fernet_key = encryptionKey.get_key()
-
-    conn, cursor = pgDb.get_db_cursor(db=db)
-
+def manage_storage_systems(fernet_key, conn, cursor):
     # Show Configured storage systems in Sidebar
     with st.sidebar.container(border=True):
         sidebar_storage_df = stContainersDf.get_configured_storage(cursor=cursor)[['Name', 'StorageIP', 'CollectData']]
@@ -105,7 +93,7 @@ def main():
                                 "storage_password":fernet_key.encrypt(storage_password.encode()),
                                 "collectdata" : True
                             }
-                            if verify_add_storage_form(data=formData, fernet_key=fernet_key):
+                            if add_storage(data=formData, fernet_key=fernet_key):
                                 pgDb.store_storage_config(conn=conn, cursor=cursor, data=formData)
                                 storage_system = {'Name':storage_name, 'Address':storage_ip, 'Credentials':[storage_user, storage_password]}
                                 storage_system['netapp_storage'] = get_cluster_information(storage_system, SSL_VERIFY)
@@ -138,9 +126,67 @@ def main():
                     on_change=update_storage_collection,
                     kwargs={"conn":conn, "cursor":cursor, 'storage':storage[1]}
                 )
-
     with col14:
         st.empty()
+
+def verify_user_login(conn, cursor, fernet_key):
+    # Check authentication
+    if st.session_state.get('authenticated'):
+        with st.sidebar:
+            st.success(f"Logged in as {st.session_state.username}")
+            if st.button("Logout"):
+                st.session_state.authenticated = False
+                st.rerun()
+        return True
+    else:
+        st.warning("Please login to continue.")
+        with st.sidebar:
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            if st.button("Login"):
+                user_authenticated = userAuth.verify_user(cursor, username, password, fernet_key)
+                if user_authenticated:
+                    st.session_state.authenticated = True
+                    st.session_state.username = username
+                    st.success("Logged in successfully!")
+                    st.rerun()
+                else:
+                    st.error("Invalid username or password")
+        return False
+
+def verify_admin_access():
+    # Verify Admin user
+    if st.session_state.username == 'admin':
+        # Enable admin access
+        st.info("Admin access enabled.")
+        return True
+    else:
+        st.warning("Access restricted. Login as Admin user.")
+        return False
+
+def main():
+    fernet_key = encryptionKey.get_key()
+    db = {
+        'db_host':os.environ['POSTGRES_HOSTNAME'],
+        'db_port':os.environ['POSTGRES_PORT'],
+        'db_name':os.environ['POSTGRES_DATABASE'],
+        'db_user':os.environ['POSTGRES_USER'],
+        'db_password':os.environ['POSTGRES_PASSWORD']
+    }
+    # Using Streamlit cache for Database connection resource
+    @st.cache_resource
+    def get_conn_cursor(db):
+        conn, cursor = pgDb.get_db_cursor(db=db)
+        return conn, cursor
+
+    conn, cursor = get_conn_cursor(db)
+    # conn, cursor = pgDb.get_db_cursor(db=db)
+
+    if verify_user_login(conn, cursor, fernet_key) and verify_admin_access():
+        manage_storage_systems(fernet_key, conn, cursor)
+    else:
+        st.stop()
+
 if __name__ == "__main__":
     main()
 
