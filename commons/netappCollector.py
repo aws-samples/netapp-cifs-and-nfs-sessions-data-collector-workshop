@@ -111,8 +111,9 @@ def get_cluster_information(storage_system, SSL_VERIFY):
 def get_cifs_sessions_data(conn, cursor, storage_system, SSL_VERIFY):
     netapp_storage = storage_system['netapp_storage']
     # Netapp cifs Sessions API
+    # Get all fields for CIFS sessions
     cluster_string='/api/protocols/cifs/sessions'
-    parameters='?return_timeout=15&return_records=true&max_records=10000'
+    parameters='?return_timeout=15&return_records=true&max_records=10000&fields=*'
     try:
         cifs_sessions_req = requests.get(netapp_storage['url']+cluster_string+parameters, headers=netapp_storage['header'], verify=SSL_VERIFY, timeout=(5, 120))
         cifs_sessions_req.raise_for_status()
@@ -120,31 +121,21 @@ def get_cifs_sessions_data(conn, cursor, storage_system, SSL_VERIFY):
     except requests.exceptions.HTTPError as e:
         print(f"HTTP Error {e.args[0]}")
 
-    for record in cifs_sessions['records']:
-        sessions_data=[]
-        sessions_link = record['_links']['self']['href']
+    if cifs_sessions['num_records'] > 0 :
+        for record in cifs_sessions['records']:
+            sessions_data=[]
+            sessions_data = [{
+                'Timestamp':datetime.strftime(datetime.now(),'%Y%m%d%H%M%S'),
+                'Storage':storage_system['Name'],
+                'vserver':record['svm']['name'],
+                'lifaddress':record['server_ip'],
+                'ServerIP':record['client_ip'],
+                'Volume':record['volumes'][0]['name'],
+                'Username':record['user'],
+                'Protocol':'CIFS'
+            }]
         try:
-            sessions_response_request = requests.get(netapp_storage['url']+sessions_link, headers=netapp_storage['header'], verify=SSL_VERIFY, timeout=(5, 120))
-            sessions_response_request.raise_for_status()
-            sessions_response = sessions_response_request.json()
-            for vol in sessions_response['volumes']:
-                rounded_timestr = pd.Timestamp(datetime.now()).round(f'{int(POLL_INTERVAL)}s')
-                timestr=datetime.strftime(rounded_timestr,'%Y%m%d%H%M%S')
-                sessions_data = [{
-                    'Timestamp':datetime.strftime(datetime.now(),'%Y%m%d%H%M%S'),
-                    'Storage':storage_system['Name'],
-                    'vserver':sessions_response['svm']['name'],
-                    'lifaddress':sessions_response['server_ip'],
-                    'ServerIP':sessions_response['client_ip'],
-                    'Volume':vol['name'],
-                    'Username':sessions_response['user'],
-                    'Protocol':'CIFS'
-                }]
-
-            pgDb.store_sessions(conn=conn, cursor=cursor, data=sessions_data)
-                    
-        except requests.exceptions.HTTPError as e:
-            print(f"HTTP Error {e.args[0]}")
+            pgDb.store_sessions(conn=conn, cursor=cursor, data=sessions_data)            
         except Exception as e:
             print(f"Error {e}")
             traceback.print_exc()
