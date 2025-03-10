@@ -118,19 +118,22 @@ def get_cifs_sessions_data(conn, cursor, storage_system, SSL_VERIFY):
         cifs_sessions_req = requests.get(netapp_storage['url']+cluster_string+parameters, headers=netapp_storage['header'], verify=SSL_VERIFY, timeout=(5, 120))
         cifs_sessions_req.raise_for_status()
         cifs_sessions = cifs_sessions_req.json()
+        sessions_data=[]
         if cifs_sessions['num_records'] > 0 :
+            # Check for active CIFS sessions 
             for record in cifs_sessions['records']:
-                sessions_data=[]
-                sessions_data = [{
-                    'Timestamp':datetime.strftime(datetime.now(),'%Y%m%d%H%M%S'),
-                    'Storage':storage_system['Name'],
-                    'vserver':record['svm']['name'],
-                    'lifaddress':record['server_ip'],
-                    'ServerIP':record['client_ip'],
-                    'Volume':record['volumes'][0]['name'],
-                    'Username':record['user'],
-                    'Protocol':'CIFS'
-                }]
+                # Check volume details in the CIFS sessions
+                if 'volumes' in record:
+                    sessions_data.append({
+                        'Timestamp':datetime.strftime(datetime.now(),'%Y%m%d%H%M%S'),
+                        'Storage':storage_system['Name'],
+                        'vserver':record['svm']['name'],
+                        'lifaddress':record['server_ip'],
+                        'ServerIP':record['client_ip'],
+                        'Volume':record['volumes'][0]['name'],
+                        'Username':record['user'],
+                        'Protocol':'CIFS'
+                    })
             pgDb.store_sessions(conn=conn, cursor=cursor, data=sessions_data)  
     except requests.exceptions.HTTPError as e:
         print(f"HTTP Error {e.args[0]}")        
