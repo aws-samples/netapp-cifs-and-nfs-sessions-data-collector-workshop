@@ -7,7 +7,7 @@ psycopg2-binary==2.9.9
 pypdf==4.2.0
 python-dateutil==2.9.0.post0
 pytz==2024.1
-requests==2.32.3
+requests==2.32.4
 seaborn==0.13.2
 SQLAlchemy==2.0.31
 st-annotated-text==4.0.1
