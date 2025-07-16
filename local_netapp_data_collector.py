@@ -1,24 +1,5 @@
 #!/usr/bin/env python3
 # Use REST API to collect and store NFS, and CIFS sessions data from NetApp storage arrays, where data is saved in a Sqlite database file locally.
-# Credentials file should be in this format:
-# {
-#     "POLL_INTERVAL" : 900,
-#     "SSL_VERIFY": false,
-#     "StorageList": [
-#         {
-#             "Name": "StorageABCD",
-#             "StorageIP": "aaa.bbb.ccc.ddd",
-#             "StorageUser": "usernameABCD",
-#             "StoragePassword": "passwordABCD"
-#         },
-#         {
-#             "Name": "StorageMNOP",
-#             "StorageIP": "mmm.nnn.ooo.ppp",
-#             "StorageUser": "usernameMNOP",
-#             "StoragePassword": "passwordMNOP"
-#         }
-#     ]
-# }
 
 import sqlite3
 from datetime import datetime

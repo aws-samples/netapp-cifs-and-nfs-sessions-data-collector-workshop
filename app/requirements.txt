@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 cryptography
 defusedcsv
 openpyxl
@@ -21,3 +22,23 @@ tqdm
 reportlab 
 matplotlib
 plotly
+=======
+cryptography==42.0.8
+defusedcsv==2.0.0
+openpyxl==3.1.5
+pandas==2.2.2
+protobuf==5.29.5
+psycopg2-binary==2.9.9
+pypdf==4.2.0
+python-dateutil==2.9.0.post0
+pytz==2024.1
+requests==2.32.4
+seaborn==0.13.2
+SQLAlchemy==2.0.31
+st-annotated-text==4.0.1
+streamlit==1.42.0
+streamlit-authenticator==0.4.1
+tabulate==0.9.0
+typing_extensions==4.12.2
+urllib3==2.5.0
+>>>>>>> origin/main

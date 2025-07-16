@@ -40,6 +40,7 @@ class User(Base):
     password = Column(String)
 
 
+<<<<<<< HEAD
 class Servers(Base):
     __tablename__ = 'servers'
     serverip = Column(String, primary_key=True)
@@ -52,6 +53,8 @@ class SessionUsers(Base):
     userprotocol = Column(String)
 
 
+=======
+>>>>>>> origin/main
 def create_tables(engine):
     try:
         Table(
@@ -66,6 +69,7 @@ def create_tables(engine):
 
     try:
         Table(
+<<<<<<< HEAD
             'servers', 
             MetaData(),
             Column('serverip', String()),
@@ -88,6 +92,8 @@ def create_tables(engine):
 
     try:
         Table(
+=======
+>>>>>>> origin/main
             'storageconfigs', 
             MetaData(),
             Column('storagename', String()),
@@ -100,6 +106,7 @@ def create_tables(engine):
         if "already exists" not in str(e):
             print("Table storageconfigs already exists. No action needed.")
             
+<<<<<<< HEAD
             
     try:
         Table(
@@ -115,6 +122,8 @@ def create_tables(engine):
             print("Table volumes already exists. No action needed.")
 
 
+=======
+>>>>>>> origin/main
     try:
         Table(
             'sessions', 

@@ -105,3 +105,39 @@
 2. Verify the container is still running with `docker ps` command.
 3. Change directory to `netapp-cifs-and-nfs-sessions-data-collector-workshop`.
 4. Run `docker-compose down` command to stop containers and data collection.
+
+
+---
+# Running data collector without docker
+
+
+`local_netapp_data_collector.py` script demonstrates how NetApp REST APIs can be used to collect active CIFS and NFS sessions information and store it to a `sqlite3` base file database.
+
+1. Install following python packages and their dependencies:
+   ```
+   pip install requests urllib3 pandas
+   ```
+2. Create `storage_credentials.json` file in same folder as the `local_netapp_data_collector.py` script.
+   ```
+   {
+        "POLL_INTERVAL" : 900,
+        "SSL_VERIFY": false,
+        "StorageList": [
+            {
+                "Name": "StorageABCD",
+                "StorageIP": "aaa.bbb.ccc.ddd",
+                "StorageUser": "usernameABCD",
+                "StoragePassword": "passwordABCD"
+            },
+            {
+                "Name": "StorageMNOP",
+                "StorageIP": "mmm.nnn.ooo.ppp",
+                "StorageUser": "usernameMNOP",
+                "StoragePassword": "passwordMNOP"
+            }
+        ]
+    }
+   ```
+3. Run the script with `python local_netapp_data_collector.py` command to confirm data collection started.
+   > [!TIP]
+   > Run this command as `nohup python local_netapp_data_collector.py &` to run data collection in background. 
