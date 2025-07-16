@@ -36,6 +36,16 @@ st.set_page_config(
     layout='wide'
     )
 st.title("Manage Storage systems data collection")
+st.markdown(
+    """
+    <style>
+        section[data-testid="stSidebar"] {
+            width: 500px !important; # Set the width to your desired value
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 def add_storage(fernet_key, data):
     for key in data.keys():

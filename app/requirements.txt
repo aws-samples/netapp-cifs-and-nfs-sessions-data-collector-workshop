@@ -1,3 +1,28 @@
+<<<<<<< HEAD
+cryptography
+defusedcsv
+openpyxl
+pandas
+protobuf
+psycopg2-binary
+pypdf
+python-dateutil
+pytz
+requests
+seaborn
+SQLAlchemy
+st-annotated-text
+streamlit
+streamlit-authenticator
+tabulate
+typing_extensions
+urllib3
+streamlit-aggrid
+tqdm
+reportlab 
+matplotlib
+plotly
+=======
 cryptography==42.0.8
 defusedcsv==2.0.0
 openpyxl==3.1.5
@@ -16,3 +41,4 @@ streamlit-authenticator==0.4.1
 tabulate==0.9.0
 typing_extensions==4.12.2
 urllib3==2.5.0
+>>>>>>> origin/main

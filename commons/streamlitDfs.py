@@ -172,22 +172,15 @@ class stContainersDf:
 
         grouped_volumes_df = pd.DataFrame(grouped_volumes)
         return grouped_volumes_df
-    
 
-    def get_filtered_sessions(storage_list, server_list, volume_list, protocol_list, limit, offset, cursor):
-        st_list = ','.join([f"'{storage}'" for storage in storage_list])
-        sr_list = ','.join([f"'{server}'" for server in server_list])
-        v_list = ','.join([f"'{volume}'" for volume in volume_list])
+    def get_all_sessions(protocol_list, limit, offset, cursor):
         p_list = ','.join([f"'{protocol}'" for protocol in protocol_list])
         cursor.execute(f"""
             select 
                 * 
             from sessions s  
             where 
-                storage in ({st_list})
-                and server in ({sr_list})
-                and volume  in ({v_list})
-                and protocol in ({p_list})
+                protocol in ({p_list})
             order by "timestamp" desc
             limit {limit}
             offset {offset}
@@ -198,7 +191,43 @@ class stContainersDf:
         return filtered_session_df
     
 
-    def get_filtered_sessions_details(storage_list, server_list, volume_list, protocol_list, cursor):
+
+    def get_filtered_sessions(storage_list, server_list, volume_list, protocol_list, limit, offset, cursor, start_date=None, end_date=None):
+        st_list = ','.join([f"'{storage}'" for storage in storage_list])
+        sr_list = ','.join([f"'{server}'" for server in server_list])
+        v_list = ','.join([f"'{volume}'" for volume in volume_list])
+        p_list = ','.join([f"'{protocol}'" for protocol in protocol_list])
+        
+        # Build the timestamp condition based on date range parameters
+        timestamp_condition = ""
+        if start_date and end_date:
+            timestamp_condition = f"and timestamp::date BETWEEN '{start_date}' AND '{end_date}'"
+        elif start_date:
+            timestamp_condition = f"and timestamp::date >= '{start_date}'"
+        elif end_date:
+            timestamp_condition = f"and timestamp::date <= '{end_date}'"
+        
+        cursor.execute(f"""
+            select 
+                * 
+            from sessions s  
+            where 
+                storage in ({st_list})
+                and server in ({sr_list})
+                and volume  in ({v_list})
+                and protocol in ({p_list})
+                {timestamp_condition}
+            order by "timestamp" desc
+            limit {limit}
+            offset {offset}
+        """)
+        fsl = cursor.fetchall()
+        filtered_session_df = pd.DataFrame(fsl, columns=['Timestamp', 'Storage', 'vserver', 'lifaddress', 'ServerIP', 'Volume', 'Username', 'Protocol'])
+
+        return filtered_session_df
+    
+
+    def filtered_sessions_summary(storage_list, server_list, volume_list, protocol_list, cursor):
         # Get the total number of sessions records stored.
         st_list = ','.join([f"'{storage}'" for storage in storage_list])
         sr_list = ','.join([f"'{server}'" for server in server_list])

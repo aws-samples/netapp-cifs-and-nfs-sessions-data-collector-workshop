@@ -5,7 +5,7 @@
 import os
 import sys
 sys.path.append(os.environ['PROJECT_HOME'])
-
+import json
 
 
 # Classes and functions defined in the commons folder
@@ -115,10 +115,15 @@ def get_cifs_sessions_data(conn, cursor, storage_system, SSL_VERIFY):
     cluster_string='/api/protocols/cifs/sessions'
     parameters='?return_timeout=15&return_records=true&max_records=10000&fields=*'
     try:
+        filtered_sessions_data = []
         cifs_sessions_req = requests.get(netapp_storage['url']+cluster_string+parameters, headers=netapp_storage['header'], verify=SSL_VERIFY, timeout=(5, 120))
         cifs_sessions_req.raise_for_status()
         cifs_sessions = cifs_sessions_req.json()
         sessions_data=[]
+<<<<<<< HEAD
+        print(cifs_sessions['num_records'])
+=======
+>>>>>>> origin/main
         if cifs_sessions['num_records'] > 0 :
             # Check for active CIFS sessions 
             for record in cifs_sessions['records']:
@@ -134,7 +139,13 @@ def get_cifs_sessions_data(conn, cursor, storage_system, SSL_VERIFY):
                         'Username':record['user'],
                         'Protocol':'CIFS'
                     })
+<<<<<<< HEAD
+                filtered_sessions_data = filtered_data(sessions_data)
+            if len(filtered_sessions_data)>0:  
+                pgDb.store_sessions(conn=conn, cursor=cursor, data=filtered_sessions_data)  
+=======
             pgDb.store_sessions(conn=conn, cursor=cursor, data=sessions_data)  
+>>>>>>> origin/main
     except requests.exceptions.HTTPError as e:
         print(f"HTTP Error {e.args[0]}")        
     except Exception as e:
@@ -185,6 +196,7 @@ def get_nfs_clients_data(conn, cursor, storage_system, SSL_VERIFY):
     session_data = []
 
     try:
+        filtered_session_data = []
         for cn in cNfsClients:
             idle = split_time_string(cn['idle_duration'])
             c1 = (idle <= int(POLL_INTERVAL))
@@ -202,13 +214,36 @@ def get_nfs_clients_data(conn, cursor, storage_system, SSL_VERIFY):
                     'Username': 'None',
                     'Protocol': 'NFS'
                 })
-        pgDb.store_sessions(conn=conn, cursor=cursor, data=session_data)
+                filtered_session_data = filtered_data(session_data)
+        if len(filtered_session_data) > 0:
+            pgDb.store_sessions(conn=conn, cursor=cursor, data=filtered_session_data)
     except TypeError as e:
         print('TypeError: %s', e)
         # logger.error('Idle time error: %s', idle)
     except Exception as e:
         print('An error occurred: %s', e)
         # logger.error('An error occurred: %s', e)
+
+
+def filtered_data(data):
+
+    with open(f'{os.environ["PROJECT_HOME"]}/filters.json', 'r') as ff:
+        filters = json.load(ff)
+
+    include_set = {frozenset(item.items()) for item in filters["include"]}
+    exclude_set = {frozenset(item.items()) for item in filters["exclude"]}
+
+    result = []
+    for item in data:
+        item_set = frozenset(item.items())
+        
+        matches_include = any(include_filter.issubset(item_set) for include_filter in include_set)
+        matches_exclude = any(exclude_filter.issubset(item_set) for exclude_filter in exclude_set)
+        
+        if (matches_include or not matches_exclude) or (matches_include and not matches_exclude):
+            result.append(item)
+            
+    return result
 
 
 def main():
@@ -222,7 +257,7 @@ def main():
     fernet_key = encryptionKey.get_key()
 
     while True:
-
+        print(f"{datetime.strftime(datetime.now(),'%Y%m%d%H%M%S')}: Reruning data collection")
         conn, cursor = pgDb.get_db_cursor(db)
         storage_list_df = stContainersDf.get_configured_storage(cursor=cursor)
         storage_list = []
