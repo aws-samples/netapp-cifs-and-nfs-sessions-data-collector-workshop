@@ -171,11 +171,20 @@ def main():
         st.session_state.num_pages = 1
 
     # Display widgets in Sidebar
-
-    ## Show the storge systems configured
+    
+    ## Add date range selector
+    st.sidebar.subheader("Date Range Filter")
+    col_date1, col_date2 = st.sidebar.columns(2)
+    with col_date1:
+        start_date = st.date_input("Start Date", value=None)
+    with col_date2:
+        end_date = st.date_input("End Date", value=None)
+    
+    ## Show the storage systems configured
     storage_df = stContainersDf.get_configured_storage(cursor=cursor)[['Name','StorageIP']]
     volumes_df = stContainersDf.get_all_volumes(cursor=cursor)[['Volume', 'vserver', 'Storage' ]]
     servers_df = stContainersDf.get_servers(cursor=cursor)[['ServerIP']]
+    
 
     storage_list = create_selectors(storage_df)
     volume_list = create_selectors(volumes_df)
@@ -196,7 +205,23 @@ def main():
     if server_list and volume_list and storage_list and selected_protocols:
         st.session_state.time_first, st.session_state.time_last, st.session_state.selected_count = stContainersDf.filtered_sessions_summary(cursor=cursor, storage_list=storage_list, server_list=server_list, volume_list=volume_list, protocol_list=selected_protocols)
         st.session_state.num_pages = round(st.session_state.selected_count/st.session_state.sessions_limit)
-        sessions_df = stContainersDf.get_filtered_sessions(cursor=cursor, storage_list=storage_list, server_list=server_list, volume_list=volume_list, protocol_list=selected_protocols, limit=st.session_state.sessions_limit, offset=st.session_state.sessions_offset)
+        
+        # Convert date inputs to string format for SQL query if they exist
+        start_date_str = start_date.strftime('%Y-%m-%d') if start_date else None
+        end_date_str = end_date.strftime('%Y-%m-%d') if end_date else None
+        
+        # Pass date range to get_filtered_sessions
+        sessions_df = stContainersDf.get_filtered_sessions(
+            cursor=cursor, 
+            storage_list=storage_list, 
+            server_list=server_list, 
+            volume_list=volume_list, 
+            protocol_list=selected_protocols, 
+            limit=st.session_state.sessions_limit, 
+            offset=st.session_state.sessions_offset,
+            start_date=start_date_str,
+            end_date=end_date_str
+        )
     else:
         st.info("Select Storage, Servers, Volumes and Protocols from Sidebar")
         sessions_df = stContainersDf.get_all_sessions(cursor=cursor,protocol_list=selected_protocols, limit=st.session_state.sessions_limit, offset=st.session_state.sessions_offset)
@@ -210,7 +235,7 @@ def main():
 
     with col2:
         with st.container(border=True):
-            st.header(f":spiral_note_pad: {' & '.join(selected_protocols)} Shares accessed by Servers.")
+            st.header(f"{' & '.join(selected_protocols)} Shares accessed by Servers.")
             st.write(f"From :blue[{sessions_df['Timestamp'].min()}] till :green[{sessions_df['Timestamp'].max()}]")
             st.subheader(f":blue[{len(server_list)}] servers and :green[{len(volume_list)}] volumes selected.", divider="blue")
             st.caption("Table is by default sorted by :grey[timestamp]. Click on any column name to sort by that column.")
@@ -218,7 +243,7 @@ def main():
             st.dataframe(
                 sessions_df,
                 use_container_width=True,
-                height=600
+                height=800
             )
             # create_selectors(sessions_df, sidebar=False)
             if st.session_state.num_pages !=0 and (st.session_state.sessions_page_num/(st.session_state.num_pages)) <=1:

@@ -36,6 +36,8 @@ services:
       - ./commons:/usr/netappcollector/commons:ro
       - ./logs:/usr/netappcollector/logs/:rw
       - ./output:/usr/netappcollector/output:rw
+      - ./filters.json:/usr/netappcollector/filters.json:ro
+      - ./cache:/root/.cache/:rw
     entrypoint: /bin/bash /usr/netappcollector/commons/entrypoint.sh
     environment:
       - PROJECT_HOME=/usr/netappcollector/
@@ -43,6 +45,7 @@ services:
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_DATABASE=postgres
+      - MPLCONFIGDIR=/root/.cache
     env_file:
       - collector.env
     security_opt:

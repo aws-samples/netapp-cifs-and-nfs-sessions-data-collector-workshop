@@ -34,7 +34,16 @@ st.set_page_config(
     
     )
 st.title("NetApp Storage CIFS and NFS clients")
-
+st.markdown(
+    """
+    <style>
+        section[data-testid="stSidebar"] {
+            width: 500px !important; # Set the width to your desired value
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 def main():
     fernet_key = encryptionKey.get_key()
@@ -116,7 +125,7 @@ def main():
     # Cell to show the summary of volumes discovered
     with col12:
         with st.container(border=True, height=500):
-            st.subheader(f":linked_paperclips: Volumes (Count = {vol_count['VolumeCount'].sum()})")
+            st.subheader(f"Volumes (Count = {vol_count['VolumeCount'].sum()})")
             st.dataframe(
                 stContainersDf.get_all_volumes(cursor=cursor),
                 use_container_width=True,
@@ -127,7 +136,7 @@ def main():
     # Cell to show the summary of servers discovered
     with col13:
         with st.container(border=True, height=500):
-            st.subheader(f":spiral_note_pad: Servers (Count = {server_count})")
+            st.subheader(f"Servers (Count = {server_count})")
             st.session_state.serverLimit = 100
             st.session_state.serverOffset = 0
 
@@ -149,7 +158,7 @@ def main():
         st.empty()
     with col22:
         with st.container(border=True):
-            st.subheader(":linked_paperclips: Top Servers grouped by Volumes accessed")
+            st.subheader("Top Servers grouped by Volumes accessed")
             st.write("[Server IP :: Storage Name :: vserver :: Volumes :: :blue[VolumeCount]]")
             st.dataframe(
                 stContainersDf.get_grouped_vols(cursor=cursor),
@@ -165,7 +174,7 @@ def main():
         st.empty()
     with col32:
         with st.container(border=True):
-            st.subheader(":linked_paperclips: Top Volumes grouped by Servers")
+            st.subheader("Top Volumes grouped by Servers")
             st.write("[Volume :: Storage Name :: vserver :: Servers :: :blue[ServerCount]]") 
             st.dataframe(
                 stContainersDf.get_grouped_servers(cursor=cursor),

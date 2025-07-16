@@ -40,6 +40,18 @@ class User(Base):
     password = Column(String)
 
 
+class Servers(Base):
+    __tablename__ = 'servers'
+    serverip = Column(String, primary_key=True)
+    servername = Column(String)
+
+
+class SessionUsers(Base):
+    __tablename__ = 'sessionusers'
+    username = Column(String, primary_key=True)
+    userprotocol = Column(String)
+
+
 def create_tables(engine):
     try:
         Table(
@@ -51,6 +63,28 @@ def create_tables(engine):
     except ProgrammingError as e:
         if "already exists" not in str(e):
             print("Table users already exists. No action needed.")
+
+    try:
+        Table(
+            'servers', 
+            MetaData(),
+            Column('serverip', String()),
+            Column('servername', String()),
+        ).create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            print("Table servers already exists. No action needed.")
+
+    try:
+        Table(
+            'sessionusers', 
+            MetaData(),
+            Column('username', String()),
+            Column('userprotocol', String()),
+        ).create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            print("Table sessionusers already exists. No action needed.")
 
     try:
         Table(
@@ -66,6 +100,21 @@ def create_tables(engine):
         if "already exists" not in str(e):
             print("Table storageconfigs already exists. No action needed.")
             
+            
+    try:
+        Table(
+            'volumes', 
+            MetaData(),
+            Column('storage', String()),
+            Column('vserver', String()),
+            Column('volume', String()),
+            Column('protocol', String())
+        ).create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            print("Table volumes already exists. No action needed.")
+
+
     try:
         Table(
             'sessions', 
