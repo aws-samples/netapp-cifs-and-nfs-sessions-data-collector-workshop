@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 RUN groupadd -r netappcollector && useradd --no-create-home -g netappcollector -r netappcollector
-USER netappcollector
+USER root
 WORKDIR /usr/netappcollector/
 COPY requirements.txt /requirements.txt
 RUN apt-get update && apt-get install -y build-essential curl software-properties-common git && rm -rf /var/lib/apt/lists/* && pip3 install --upgrade pip && pip3 install -r /requirements.txt
