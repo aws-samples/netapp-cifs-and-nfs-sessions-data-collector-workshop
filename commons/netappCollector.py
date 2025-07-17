@@ -120,10 +120,7 @@ def get_cifs_sessions_data(conn, cursor, storage_system, SSL_VERIFY):
         cifs_sessions_req.raise_for_status()
         cifs_sessions = cifs_sessions_req.json()
         sessions_data=[]
-<<<<<<< HEAD
         print(cifs_sessions['num_records'])
-=======
->>>>>>> origin/main
         if cifs_sessions['num_records'] > 0 :
             # Check for active CIFS sessions 
             for record in cifs_sessions['records']:
@@ -139,13 +136,9 @@ def get_cifs_sessions_data(conn, cursor, storage_system, SSL_VERIFY):
                         'Username':record['user'],
                         'Protocol':'CIFS'
                     })
-<<<<<<< HEAD
                 filtered_sessions_data = filtered_data(sessions_data)
             if len(filtered_sessions_data)>0:  
                 pgDb.store_sessions(conn=conn, cursor=cursor, data=filtered_sessions_data)  
-=======
-            pgDb.store_sessions(conn=conn, cursor=cursor, data=sessions_data)  
->>>>>>> origin/main
     except requests.exceptions.HTTPError as e:
         print(f"HTTP Error {e.args[0]}")        
     except Exception as e:
