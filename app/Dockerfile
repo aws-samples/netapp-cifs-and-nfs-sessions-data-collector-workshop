@@ -1,5 +1,5 @@
 FROM python:3.9-slim
-RUN groupadd -r netappcollector && useradd --no-create-home -g netappcollector -r netappcollector
+RUN groupadd -r deciphercollector && useradd --no-create-home -g deciphercollector -r deciphercollector
 USER root
 WORKDIR /usr/netappcollector/
 COPY requirements.txt /requirements.txt

@@ -23,11 +23,21 @@ class pgDb:
     def store_sessions(conn, cursor, data):
         for row in data:
             cursor.execute(f"""
-                INSERT INTO public.sessions (timestamp, storage, vserver, lifaddress, server, volume, username, protocol)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            """, (datetime.strptime(row['Timestamp'], '%Y%m%d%H%M%S').strftime('%Y-%m-%d %H:%M:%S'), row['Storage'], row['vserver'], row['lifaddress'], row['ServerIP'], row['Volume'], row['Username'], row['Protocol']))
+                INSERT INTO public.sessions (timestamp, storagetype, storage, vserver, lifaddress, server, volume, username, protocol)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                    datetime.strptime(row['Timestamp'], '%Y%m%d%H%M%S').strftime('%Y-%m-%d %H:%M:%S'), 
+                    row['StorageType'], 
+                    row['Storage'], 
+                    row['vserver'], 
+                    row['lifaddress'], 
+                    row['ServerIP'], 
+                    row['Volume'], 
+                    row['Username'], 
+                    row['Protocol']
+                )
+            )
             conn.commit()
-
 
     def store_storage_config(conn, cursor, data):
         """
@@ -46,8 +56,9 @@ class pgDb:
             None
         """
         cursor.execute(f"""
-            INSERT INTO public.storageconfigs (storagename, storageip, storageuser, storagepassword, collectdata)
+            INSERT INTO public.storageconfigs (storagetype, storagename, storageip, storageuser, storagepassword, collectdata)
             VALUES (
+                '{data['storage_type']}',
                 '{data['storage_name']}', 
                 '{data['storage_ip']}', 
                 '{data['storage_user']}', 

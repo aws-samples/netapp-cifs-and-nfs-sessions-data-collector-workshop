@@ -39,7 +39,7 @@ def get_isilon_cluster_information(storage_system, SSL_VERIFY):
     cluster_address = storage_system['Address']
     username = storage_system['Credentials'][0]
     password = storage_system['Credentials'][1]
-    cluster_dict['url'] = 'https://'+cluster_address
+    cluster_dict['url'] = 'https://'+cluster_address+':8080'
     AuthBase64String = base64.encodebytes(
             ('{}:{}'.format(username, password)
         ).encode()).decode().replace('\n', '')
@@ -52,8 +52,7 @@ def get_isilon_cluster_information(storage_system, SSL_VERIFY):
             cluster_dict['url']+cluster_string,
             headers=cluster_dict['header'],
             verify=SSL_VERIFY,
-            timeout=(5, 120),
-            port=8080
+            timeout=(5, 120)
         )
         cluster_name_req.raise_for_status()        
         if 'isisessid' in cluster_name_req.cookies:
@@ -61,7 +60,7 @@ def get_isilon_cluster_information(storage_system, SSL_VERIFY):
     except requests.exceptions.HTTPError as e:
         logger.error('HTTP Error occurred for GetClusterInformation: %s', e.args[0])
         print(f"HTTP Error {e.args[0]}")
-        raise ValueError(f"HTTPError occurred: {str(e)}")
+        raise ValueError(f"HTTPError occurred: {str(e)}") from e
 
     cluster_dict['name'] = cluster_name_req.json()['name']
 
@@ -69,7 +68,7 @@ def get_isilon_cluster_information(storage_system, SSL_VERIFY):
 
 
 def get_isilon_statistics_client(conn, cursor, storage_system, SSL_VERIFY):
-    isilon_storage = storage_system['isilon_storage']
+    isilon_storage = storage_system['isilon']
     cluster_string='/platform/14/statistics/summary/client '
     try:
         filtered_sessions_data = []
@@ -81,48 +80,21 @@ def get_isilon_statistics_client(conn, cursor, storage_system, SSL_VERIFY):
             for record in statistics_client['client']:
                 sessions_data.append({
                     'Timestamp':datetime.strftime(datetime.now(),'%Y%m%d%H%M%S'),
+                    'StorageType':'isilon',
                     'Storage':storage_system['Name'],
-                    'vserver':"NA",
+                    'vserver':"NotAvailable",
                     'lifaddress':record['local_addr'],
                     'ServerIP':record['remote_addr'],
-                    'Volume':"XXXX",
-                    'Username':f"{record['user']['name']}_{record['User']['id']}",
+                    'Volume':"NotAvailable",
+                    'Username':f"{record['user']['name']}_{record['user']['id']}",
                     'Protocol': record['protocol']
                 })
-            pgDb.store_sessions(conn=conn, cursor=cursor, data=filtered_sessions_data)  
+            pgDb.store_sessions(conn=conn, cursor=cursor, data=sessions_data)
     except requests.exceptions.HTTPError as e:
         print(f"HTTP Error {e.args[0]}")        
     except Exception as e:
         print(f"Error {e}")
         traceback.print_exc()
-
-
-# Function to convert idle time from PT to seconds.
-def split_time_string(time_string):
-    pattern1 = r"PT(\d+)S"
-    pattern2 = r"PT(\d+)M(\d+)S"
-    pattern3 = r"PT(\d+)H(\d+)M(\d+)S"
-
-    if re.match(pattern1, time_string):
-        t = re.match(pattern1, time_string)
-        seconds = int(t.group(1))
-        return seconds
-    elif re.match(pattern2, time_string):
-        t = re.match(pattern2, time_string)
-        minutes = int(t.group(1))
-        seconds = int(t.group(2))
-        return minutes*60+seconds
-    elif re.match(pattern3, time_string):
-        t = re.match(pattern3, time_string)
-        hours = int(t.group(1))
-        minutes = int(t.group(2))
-        seconds = int(t.group(3))
-        return hours*3600+minutes*60+seconds
-    else:
-        # Return 1 when no pattern match and idle time is unknown.
-        # Safe value to include NFS mounts with unmatched idle pattern.
-        # This value can be set higher than POLL_INTERVAL / DATA_COLLECTION_INTERVAL when idle_duration patterns are safe to be not included in the data discovery process to support migration projects.
-        return 1
 
 
 def filtered_data(data):
@@ -164,17 +136,17 @@ def main():
 
         # Collect data for each Storage configured
         for index, storage in storage_list_df.iterrows():
-            if storage['CollectData']:
+            if storage['CollectData'] and storage['StorageType'] == 'isilon':
                 storage_system = {
                     'Name':storage['Name'], 
                     'Address':storage['StorageIP'], 
                     'Credentials':[
-                        storage['StorageUser'], 
+                        storage['StorageUser'],
                         fernet_key.decrypt(storage['StoragePassEnc'].tobytes()).decode()
-                    ], 
+                    ],
                     'CollectData':storage['CollectData']
                 }
-                storage_system['isilon_storage'] = get_isilon_cluster_information(storage_system, SSL_VERIFY)
+                storage_system['isilon'] = get_isilon_cluster_information(storage_system, SSL_VERIFY)
                 storage_system['get_isilon_statistics_client'] = threading.Thread(target=get_isilon_statistics_client, args=(conn, cursor, storage_system, SSL_VERIFY,))
                 storage_system['get_isilon_statistics_client'].start()
                 storage_list.append(storage_system)

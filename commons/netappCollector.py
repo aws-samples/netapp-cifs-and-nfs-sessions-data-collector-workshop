@@ -109,7 +109,7 @@ def get_cluster_information(storage_system, SSL_VERIFY):
 
 # Collect CIFS sessions details and store in Postgres database
 def get_cifs_sessions_data(conn, cursor, storage_system, SSL_VERIFY):
-    netapp_storage = storage_system['netapp_storage']
+    netapp_storage = storage_system['netapp']
     # Netapp cifs Sessions API
     # Get all fields for CIFS sessions
     cluster_string='/api/protocols/cifs/sessions'
@@ -128,6 +128,7 @@ def get_cifs_sessions_data(conn, cursor, storage_system, SSL_VERIFY):
                 if 'volumes' in record:
                     sessions_data.append({
                         'Timestamp':datetime.strftime(datetime.now(),'%Y%m%d%H%M%S'),
+                        'StorageType': 'netapp',
                         'Storage':storage_system['Name'],
                         'vserver':record['svm']['name'],
                         'lifaddress':record['server_ip'],
@@ -175,7 +176,7 @@ def split_time_string(time_string):
 
 
 def get_nfs_clients_data(conn, cursor, storage_system, SSL_VERIFY):
-    netapp_storage = storage_system['netapp_storage']
+    netapp_storage = storage_system['netapp']
     # Netapp NFS Sessions API
     clusterString='/api/protocols/nfs/connected-clients'
     parameters='?return_timeout=25&return_records=true&max_records=10000&idle_duration=PT*'
@@ -199,6 +200,7 @@ def get_nfs_clients_data(conn, cursor, storage_system, SSL_VERIFY):
                 # timestr=datetime.strftime(rounded_timestr,'%Y%m%d%H%M%S')
                 session_data.append({
                     'Timestamp':    datetime.strftime(datetime.now(),'%Y%m%d%H%M%S'), 
+                    'StorageType':'netapp',
                     'Storage':  storage_system['Name'], 
                     'vserver':  cn['svm']['name'], 
                     'lifaddress':   cn['server_ip'], 
@@ -257,9 +259,9 @@ def main():
 
         # Collect data for each Storage configured
         for index, storage in storage_list_df.iterrows():
-            if storage['CollectData']:
+            if storage['CollectData'] and storage['StorageType'] == 'netapp':
                 storage_system = {'Name':storage['Name'], 'Address':storage['StorageIP'], 'Credentials':[storage['StorageUser'], fernet_key.decrypt(storage['StoragePassEnc'].tobytes()).decode()], 'CollectData':storage['CollectData']}
-                storage_system['netapp_storage'] = get_cluster_information(storage_system, SSL_VERIFY)
+                storage_system['netapp'] = get_cluster_information(storage_system, SSL_VERIFY)
                 storage_system['get_cifs_sessions_data'] = threading.Thread(target=get_cifs_sessions_data, args=(conn, cursor, storage_system, SSL_VERIFY,))
                 storage_system['get_nfs_clients_data'] = threading.Thread(target=get_nfs_clients_data, args=(conn, cursor, storage_system, SSL_VERIFY,))
                 storage_system['get_cifs_sessions_data'].start()

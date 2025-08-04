@@ -16,6 +16,7 @@ Base = declarative_base()
 class volSessions(Base):
     __tablename__ = 'sessions'
     timestamp = Column(TIMESTAMP(), primary_key=True)
+    storagetype = Column(String())
     storage = Column(String())
     vserver = Column(String())
     lifaddress = Column(String())
@@ -32,6 +33,7 @@ class storage(Base):
     storageip = Column(String())
     storageuser = Column(String())
     storagepassword = Column(String())
+    storagetype = Column(String())
 
 
 class User(Base):
@@ -90,6 +92,7 @@ def create_tables(engine):
         Table(
             'storageconfigs', 
             MetaData(),
+            Column('storagetype', String()),
             Column('storagename', String()),
             Column('storageip', String()),
             Column('storageuser', String()),
@@ -120,6 +123,7 @@ def create_tables(engine):
             'sessions', 
             MetaData(),
             Column('timestamp', TIMESTAMP),
+            Column('storagetype', String()),
             Column('storage', String()),
             Column('vserver', String()),
             Column('lifaddress', String()),

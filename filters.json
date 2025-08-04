@@ -1,0 +1,6 @@
+{
+    "include": [
+        {"Storage": "", "vserver": "", "lifaddress":"", "ServerIP":"", "Volume":"", "Username":""}
+    ],
+    "exclude": []
+}
