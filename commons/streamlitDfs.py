@@ -9,7 +9,7 @@ class stContainersDf:
                 SELECT * FROM storageconfigs s ORDER by s.storagename;
             """)
             storage_list = cursor.fetchall()
-            storage_df = pd.DataFrame(storage_list, columns=['Name', 'StorageIP', 'StorageUser', 'StoragePassEnc', 'CollectData'])
+            storage_df = pd.DataFrame(storage_list, columns=['StorageType', 'Name', 'StorageIP', 'StorageUser', 'StoragePassEnc', 'CollectData'])
             return storage_df
         except Exception as e:
             return traceback.format_exc()
@@ -186,7 +186,7 @@ class stContainersDf:
             offset {offset}
         """)
         fsl = cursor.fetchall()
-        filtered_session_df = pd.DataFrame(fsl, columns=['Timestamp', 'Storage', 'vserver', 'lifaddress', 'ServerIP', 'Volume', 'Username', 'Protocol'])
+        filtered_session_df = pd.DataFrame(fsl, columns=['Timestamp', 'StorageType', 'Storage', 'vserver', 'lifaddress', 'ServerIP', 'Volume', 'Username', 'Protocol'])
 
         return filtered_session_df
     
@@ -222,7 +222,7 @@ class stContainersDf:
             offset {offset}
         """)
         fsl = cursor.fetchall()
-        filtered_session_df = pd.DataFrame(fsl, columns=['Timestamp', 'Storage', 'vserver', 'lifaddress', 'ServerIP', 'Volume', 'Username', 'Protocol'])
+        filtered_session_df = pd.DataFrame(fsl, columns=['Timestamp', 'StorageType', 'Storage', 'vserver', 'lifaddress', 'ServerIP', 'Volume', 'Username', 'Protocol'])
 
         return filtered_session_df
     

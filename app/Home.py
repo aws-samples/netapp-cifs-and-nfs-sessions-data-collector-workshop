@@ -91,7 +91,7 @@ def main():
 
     ## Show the storge systems configured
     with st.sidebar.container(border=True):
-        sidebar_storage_df = stContainersDf.get_configured_storage(cursor=cursor)[['Name', 'StorageIP', 'CollectData']]
+        sidebar_storage_df = stContainersDf.get_configured_storage(cursor=cursor)[['Name', 'StorageIP', 'CollectData', 'StorageType']]
         st.dataframe(sidebar_storage_df, hide_index=True, use_container_width=True)
 
     ## Show the range of timestamps of the data collected.

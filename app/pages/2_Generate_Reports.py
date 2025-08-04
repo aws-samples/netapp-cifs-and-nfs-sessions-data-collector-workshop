@@ -437,8 +437,12 @@ def create_visual_report(sessions_df):
                 hour_day = sessions_df.groupby(['DayOfWeek', 'Hour']).size().reset_index(name='Count')
                 hour_day_pivot = hour_day.pivot(index='DayOfWeek', columns='Hour', values='Count').fillna(0)
                 
+                # Ensure all 24 hours are represented in columns
+                all_hours = list(range(24))
+                hour_day_pivot = hour_day_pivot.reindex(columns=all_hours, fill_value=0)
+                
                 # Reorder index based on day_order
-                hour_day_pivot = hour_day_pivot.reindex(day_order)
+                hour_day_pivot = hour_day_pivot.reindex(day_order, fill_value=0)
                 
                 # Create heatmap
                 fig = px.imshow(
@@ -446,7 +450,7 @@ def create_visual_report(sessions_df):
                     labels=dict(x="Hour of Day", y="Day of Week", color="Session Count"),
                     title="Session Activity Heatmap by Hour and Day",
                     color_continuous_scale='Viridis',
-                    x=list(range(24)),
+                    x=all_hours,
                     y=day_order
                 )
                 fig.update_layout(height=400)

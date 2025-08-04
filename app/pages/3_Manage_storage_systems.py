@@ -8,6 +8,7 @@ from commons.streamlitDfs import stContainersDf
 from commons.encryptionKey import encryptionKey
 from commons.auth import userAuth
 from commons.netappCollector import get_cluster_information, get_cifs_sessions_data, get_nfs_clients_data
+from commons.isilonCollector import get_isilon_cluster_information, get_isilon_statistics_client
 
 
 import streamlit as st
@@ -53,29 +54,41 @@ def add_storage(fernet_key, data):
             st.error(f"Please fill all fields. Missing value in : {key}")
             return False
     try:
-        get_cluster_information({'Address':data['storage_ip'], 'Credentials':[data['storage_user'], fernet_key.decrypt(data['storage_password']).decode()]}, SSL_VERIFY=SSL_VERIFY)
+        get_cluster_information(
+            {
+                'Address':data['storage_ip'], 
+                'Credentials':[data['storage_user'], 
+                fernet_key.decrypt(data['storage_password']).decode()]
+            },
+            SSL_VERIFY=SSL_VERIFY
+        )
         return True
     except requests.exceptions.ConnectTimeout as rcte:
         st.error(f"Connect Timeout error occured. Check network reachability to {rcte.request.url}")
         return False
     except requests.exceptions.RequestException as rre:
-        # st.write(rre)
+        st.write(rre)
         st.error(f"Requests Exception occured. Check the network reachability to {data['storage_ip']}")
         return False
     except ValueError as ve:
         if "unauthorized" in str(ve).lower():
             st.error("Incorrect username and password.")
-            # st.warning(f"{ve}")
+            st.warning(f"{ve}")
+        return False
+    except (ConnectionError) as ce:
+        st.write(ce)
+        st.error("Network connection error occurred.")
         return False
     except Exception as e:
+        logger.error(f"Unexpected error in add_storage: {e}")
         st.write(e)
-        st.error("Unknown error occured.")
+        st.error("Unknown error occurred.")
         return False
 
 def manage_storage_systems(fernet_key, conn, cursor):
     # Show Configured storage systems in Sidebar
     with st.sidebar.container(border=True):
-        sidebar_storage_df = stContainersDf.get_configured_storage(cursor=cursor)[['Name', 'StorageIP', 'CollectData']]
+        sidebar_storage_df = stContainersDf.get_configured_storage(cursor=cursor)[['Name', 'StorageIP', 'CollectData','StorageType']]
         st.dataframe(sidebar_storage_df, hide_index=True, use_container_width=True)
 
     col11, col12, col13, col14 = st.columns([1, 8, 5, 4])
@@ -87,6 +100,8 @@ def manage_storage_systems(fernet_key, conn, cursor):
             with st.form("Add Storage form", border=1):
                 st.subheader(f"Add Storage Config details")
                 storage_system = {}
+                options = ["NetApp", "Isilon"]
+                storage_type = st.pills("Select NetApp or Isilon", options, selection_mode="single", default=options[0])
                 storage_name = st.text_input("Storage system Name")
                 storage_ip = st.text_input("Storage system IP address")
                 storage_user = st.text_input("Storage system Username")
@@ -97,6 +112,7 @@ def manage_storage_systems(fernet_key, conn, cursor):
                     with st.spinner('Processing form...'):
                         try:
                             formData = {
+                                "storage_type": storage_type.lower(),
                                 "storage_name":storage_name, 
                                 "storage_ip":storage_ip, 
                                 "storage_user":storage_user, 
@@ -106,9 +122,13 @@ def manage_storage_systems(fernet_key, conn, cursor):
                             if add_storage(data=formData, fernet_key=fernet_key):
                                 pgDb.store_storage_config(conn=conn, cursor=cursor, data=formData)
                                 storage_system = {'Name':storage_name, 'Address':storage_ip, 'Credentials':[storage_user, storage_password]}
-                                storage_system['netapp_storage'] = get_cluster_information(storage_system, SSL_VERIFY)
-                                get_nfs_clients_data(conn, cursor, storage_system, SSL_VERIFY)
-                                get_cifs_sessions_data(conn, cursor, storage_system, SSL_VERIFY)
+                                if storage_type.lower() == 'netapp':
+                                    storage_system['netapp'] = get_cluster_information(storage_system, SSL_VERIFY)
+                                    get_nfs_clients_data(conn, cursor, storage_system, SSL_VERIFY)
+                                    get_cifs_sessions_data(conn, cursor, storage_system, SSL_VERIFY)
+                                elif storage_type.lower() == 'isilon':
+                                    storage_system['isilon'] = get_isilon_cluster_information(storage_system, SSL_VERIFY)
+                                    get_isilon_statistics_client(conn, cursor, storage_system, SSL_VERIFY)
                                 st.rerun()
                         except (pg.errors.UniqueViolation, pg.errors.IntegrityError) as e:
                             st.error(e.pgerror.split('DETAIL:  Key ')[1])

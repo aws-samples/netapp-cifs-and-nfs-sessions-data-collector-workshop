@@ -25,7 +25,7 @@ services:
     depends_on: 
       database:
         condition: service_healthy
-    image: netappcollector:1.03
+    image: netappcollector:1.05
     hostname: webserver
     container_name: webserver
     restart: always

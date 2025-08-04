@@ -16,6 +16,7 @@ Base = declarative_base()
 class volSessions(Base):
     __tablename__ = 'sessions'
     timestamp = Column(TIMESTAMP(), primary_key=True)
+    storagetype = Column(String())
     storage = Column(String())
     vserver = Column(String())
     lifaddress = Column(String())
@@ -32,6 +33,7 @@ class storage(Base):
     storageip = Column(String())
     storageuser = Column(String())
     storagepassword = Column(String())
+    storagetype = Column(String())
 
 
 class User(Base):
@@ -40,7 +42,6 @@ class User(Base):
     password = Column(String)
 
 
-<<<<<<< HEAD
 class Servers(Base):
     __tablename__ = 'servers'
     serverip = Column(String, primary_key=True)
@@ -53,8 +54,6 @@ class SessionUsers(Base):
     userprotocol = Column(String)
 
 
-=======
->>>>>>> origin/main
 def create_tables(engine):
     try:
         Table(
@@ -69,7 +68,6 @@ def create_tables(engine):
 
     try:
         Table(
-<<<<<<< HEAD
             'servers', 
             MetaData(),
             Column('serverip', String()),
@@ -92,10 +90,9 @@ def create_tables(engine):
 
     try:
         Table(
-=======
->>>>>>> origin/main
             'storageconfigs', 
             MetaData(),
+            Column('storagetype', String()),
             Column('storagename', String()),
             Column('storageip', String()),
             Column('storageuser', String()),
@@ -106,7 +103,6 @@ def create_tables(engine):
         if "already exists" not in str(e):
             print("Table storageconfigs already exists. No action needed.")
             
-<<<<<<< HEAD
             
     try:
         Table(
@@ -122,13 +118,12 @@ def create_tables(engine):
             print("Table volumes already exists. No action needed.")
 
 
-=======
->>>>>>> origin/main
     try:
         Table(
             'sessions', 
             MetaData(),
             Column('timestamp', TIMESTAMP),
+            Column('storagetype', String()),
             Column('storage', String()),
             Column('vserver', String()),
             Column('lifaddress', String()),
