@@ -100,8 +100,7 @@ def manage_storage_systems(fernet_key, conn, cursor):
             with st.form("Add Storage form", border=1):
                 st.subheader(f"Add Storage Config details")
                 storage_system = {}
-                options = ["NetApp", "Isilon"]
-                storage_type = st.pills("Select NetApp or Isilon", options, selection_mode="single", default=options[0])
+                storage_type = st.selectbox("Select NetApp or Isilon", index=0, ["NetApp", "Isilon"])
                 storage_name = st.text_input("Storage system Name")
                 storage_ip = st.text_input("Storage system IP address")
                 storage_user = st.text_input("Storage system Username")
