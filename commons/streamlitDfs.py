@@ -17,19 +17,19 @@ class stContainersDf:
 
     def get_servers(cursor):
         cursor.execute("""
-            select distinct ("server") from sessions s;
+            select * from servers s;
         """)
         server_list = cursor.fetchall()
-        server_list_df = pd.DataFrame(server_list, columns=['ServerIP'])
+        server_list_df = pd.DataFrame(server_list, columns=['ServerIP', 'SessionUser', 'Protocol'])
         return server_list_df
 
 
-    def get_cifs_users(cursor):
+    def get_session_users(cursor):
         cursor.execute("""
-            select distinct ("username") from sessions where protocol = 'CIFS'
+            select * from sessionusers
         """)
         user_list = cursor.fetchall()
-        user_list_df = pd.DataFrame(user_list, columns=['Username'])
+        user_list_df = pd.DataFrame(user_list, columns=['Username', 'Protocol'])
         return user_list_df
 
 
@@ -77,32 +77,24 @@ class stContainersDf:
     def yield_volumes(cursor, limit, offset):
         vdl = []
         cursor.execute(f"""
-            select distinct (storage, vserver, volume, protocol) volList, protocol from sessions order by protocol limit {limit} offset {offset}
+            select storagetype, storage, vserver, volume, protocol from volumes order by protocol limit {limit} offset {offset}
         """)
         volumes = cursor.fetchall()
-        for vd in volumes:
-            vdl.append(vd[0][1:-1].split(','))
-        volumes_df=pd.DataFrame(vdl, columns=["Storage", "vserver", "Volume", "Protocol"])
+        volumes_df=pd.DataFrame(volumes, columns=["StorageType", "Storage", "vserver", "Volume", "Protocol"])
 
         while volumes:
             yield volumes_df
             volumes = cursor.fetchall()
-            for vd in volumes:
-                vdl.append(vd[0][1:-1].split(','))
-            volumes_df=pd.DataFrame(vdl, columns=["Storage", "vserver", "Volume", "Protocol"])
+            volumes_df=pd.DataFrame(volumes, columns=["StorageType", "Storage", "vserver", "Volume", "Protocol"])
 
 
     def get_all_volumes(cursor):
-        vdl = []
         cursor.execute(f"""
-            select distinct (storage, vserver, volume, protocol) volList, protocol from sessions order by protocol
+            select * from volumes order by protocol
         """)
-        volumes = cursor.fetchall()
-        for vd in volumes:
-            vdl.append(vd[0][1:-1].split(','))
-        volumes_df=pd.DataFrame(vdl, columns=["Storage", "vserver", "Volume", "Protocol"])
-
-        return volumes_df
+        volume_list = cursor.fetchall()
+        volume_list_df=pd.DataFrame(volume_list, columns=["StorageType", "Storage", "vserver", "Volume", "Protocol"])
+        return volume_list_df
 
 
     def get_grouped_vols(cursor):
@@ -173,6 +165,7 @@ class stContainersDf:
         grouped_volumes_df = pd.DataFrame(grouped_volumes)
         return grouped_volumes_df
 
+
     def get_all_sessions(protocol_list, limit, offset, cursor):
         p_list = ','.join([f"'{protocol}'" for protocol in protocol_list])
         cursor.execute(f"""
@@ -191,9 +184,10 @@ class stContainersDf:
         return filtered_session_df
     
 
-
-    def get_filtered_sessions(storage_list, server_list, volume_list, protocol_list, limit, offset, cursor, start_date=None, end_date=None):
-        st_list = ','.join([f"'{storage}'" for storage in storage_list])
+    def get_filtered_sessions(session_users_list, server_list, volume_list, protocol_list, limit, offset, cursor, start_date=None, end_date=None):
+        print(session_users_list)
+        print(volume_list)
+        su_list = ','.join([f"'{username}'" for username in session_users_list])
         sr_list = ','.join([f"'{server}'" for server in server_list])
         v_list = ','.join([f"'{volume}'" for volume in volume_list])
         p_list = ','.join([f"'{protocol}'" for protocol in protocol_list])
@@ -212,7 +206,7 @@ class stContainersDf:
                 * 
             from sessions s  
             where 
-                storage in ({st_list})
+                username in ({su_list})
                 and server in ({sr_list})
                 and volume  in ({v_list})
                 and protocol in ({p_list})
@@ -227,9 +221,10 @@ class stContainersDf:
         return filtered_session_df
     
 
-    def filtered_sessions_summary(storage_list, server_list, volume_list, protocol_list, cursor):
+    def filtered_sessions_summary(session_users_list, server_list, volume_list, protocol_list, cursor):
         # Get the total number of sessions records stored.
-        st_list = ','.join([f"'{storage}'" for storage in storage_list])
+        # st_list = ','.join([f"'{storage}'" for storage in storage_list])
+        su_list = ','.join([f"'{username}'" for username in session_users_list])
         sr_list = ','.join([f"'{server}'" for server in server_list])
         v_list = ','.join([f"'{volume}'" for volume in volume_list])
         p_list = ','.join([f"'{protocol}'" for protocol in protocol_list])
@@ -240,7 +235,7 @@ class stContainersDf:
                 count(*) as count 
             from sessions s
             where 
-                storage in ({st_list})
+                username in ({su_list})
                 and server in ({sr_list})
                 and volume  in ({v_list})
                 and protocol in ({p_list})

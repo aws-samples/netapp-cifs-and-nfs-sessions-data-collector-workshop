@@ -110,7 +110,7 @@ def create_selectors(df, height=200, is_volume_table=False):
 
     return items_list
 
-def generate_sessions_pdf(sessions_df, storage_list, server_list, volume_list, protocol_list, start_date, end_date):
+def generate_sessions_pdf(sessions_df, session_users_list, server_list, volume_list, protocol_list, start_date, end_date):
     """
     Generate a PDF report with visualizations of the sessions data
     """
@@ -144,7 +144,7 @@ def generate_sessions_pdf(sessions_df, storage_list, server_list, volume_list, p
     elements.append(Paragraph("Report Parameters:", header_style))
     date_range = f"From {start_date} to {end_date}" if start_date and end_date else "All available dates"
     elements.append(Paragraph(f"Date Range: {date_range}", normal_style))
-    elements.append(Paragraph(f"Storage Systems: {', '.join(storage_list[:5])}{'...' if len(storage_list) > 5 else ''}", normal_style))
+    elements.append(Paragraph(f"Storage Systems: {', '.join(session_users_list[:5])}{'...' if len(session_users_list) > 5 else ''}", normal_style))
     elements.append(Paragraph(f"Protocols: {', '.join(protocol_list)}", normal_style))
     elements.append(Spacer(1, 0.25*inch))
     
@@ -510,23 +510,25 @@ def main():
         
         # Get data for selectors
         storage_df = stContainersDf.get_configured_storage(cursor=cursor)[['Name', 'StorageIP']]
-        volumes_df = stContainersDf.get_all_volumes(cursor=cursor)[['Volume', 'vserver', 'Storage']]
+        volumes_df = stContainersDf.get_all_volumes(cursor=cursor)[["Volume", "vserver", "Storage", "Protocol", "StorageType"]]
         servers_df = stContainersDf.get_servers(cursor=cursor)[['ServerIP']]
-        col1, col2, col3 = st.columns([20, 35, 20])
+        session_users_df = stContainersDf.get_session_users(cursor=cursor)[['Username', 'Protocol']]
+        col1, col2, col3 = st.columns([35, 25, 15])
         with col1:
-            with st.container(border=True):
-                # Create AgGrid selectors for filters
-                st.write("#### Select Storage")
-                storage_list = create_selectors(storage_df, height=250)
-                if not storage_list:
-                    st.error("Please select at least one storage system.")
-
-        with col2:
             with st.container(border=True):                
                 st.write("#### Select Volumes")
-                volume_list = create_selectors(volumes_df, height=250, is_volume_table=True)
+                volume_list = create_selectors(volumes_df, height=250)
                 if not volume_list:
                     st.error("Please select at least one volume.")
+
+        with col2:
+            with st.container(border=True):
+                # Create AgGrid selectors for filters
+                st.write("#### Select Users")
+                session_users_list = create_selectors(session_users_df, height=250)
+                if not session_users_list:
+                    st.error("Please select at least one storage system.")
+
 
         with col3:
             with st.container(border=True):
@@ -554,10 +556,10 @@ def main():
         st.subheader("Generate and Download Report")
         
         # Add some information about the selected filters
-        if storage_list and server_list and volume_list and selected_protocols:
+        if session_users_list and server_list and volume_list and selected_protocols:
             time_last, time_first, selected_count = stContainersDf.filtered_sessions_summary(
                 cursor=cursor, 
-                storage_list=storage_list, 
+                session_users_list=session_users_list, 
                 server_list=server_list, 
                 volume_list=volume_list, 
                 protocol_list=selected_protocols
@@ -568,7 +570,7 @@ def main():
                 st.write(f"Date range: From **{time_first}** to **{time_last}**")
             else:
                 st.write(f"Date range: From **{start_date}** to **{end_date}**")
-            st.write(f"Selected: **{len(storage_list)}** storage systems, **{len(server_list)}** servers, **{len(volume_list)}** volumes, **{len(selected_protocols)}** protocols")
+            st.write(f"Selected: **{len(session_users_list)}** storage systems, **{len(server_list)}** servers, **{len(volume_list)}** volumes, **{len(selected_protocols)}** protocols")
             
             # Create download button
             if st.button("Generate and Download Report", type="primary"):
@@ -591,7 +593,7 @@ def main():
                     status_text.text("Retrieving data...")
                     sessions_df = stContainersDf.get_filtered_sessions(
                         cursor=cursor, 
-                        storage_list=storage_list, 
+                        session_users_list=session_users_list, 
                         server_list=server_list, 
                         volume_list=volume_list, 
                         protocol_list=selected_protocols, 
@@ -616,10 +618,13 @@ def main():
                         time.sleep(0.01)
                     
                     # Format the filename
-                    if not start_date:
-                        start_date = time_first.date()
-                    if not end_date:
-                        end_date = time_last.date()
+                    try:
+                        if not start_date:
+                            start_date = time_first.date()
+                        if not end_date:
+                            end_date = time_last.date()
+                    except AttributeError:
+                        pass
                     filename = f'sessions-from-{start_date}-to-{end_date}.csv'
                     
                     # Show success message

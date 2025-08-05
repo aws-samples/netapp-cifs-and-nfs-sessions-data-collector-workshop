@@ -4,7 +4,6 @@ from datetime import datetime
 
 
 class pgDb:
-
     def get_db_cursor(db):
         # Connect to the database
         conn = pg.connect(
@@ -18,26 +17,6 @@ class pgDb:
         # Create a cursor object
         cursor = conn.cursor()
         return (conn, cursor)
-
-
-    def store_sessions(conn, cursor, data):
-        for row in data:
-            cursor.execute(f"""
-                INSERT INTO public.sessions (timestamp, storagetype, storage, vserver, lifaddress, server, volume, username, protocol)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                    datetime.strptime(row['Timestamp'], '%Y%m%d%H%M%S').strftime('%Y-%m-%d %H:%M:%S'), 
-                    row['StorageType'], 
-                    row['Storage'], 
-                    row['vserver'], 
-                    row['lifaddress'], 
-                    row['ServerIP'], 
-                    row['Volume'], 
-                    row['Username'], 
-                    row['Protocol']
-                )
-            )
-            conn.commit()
 
     def store_storage_config(conn, cursor, data):
         """
@@ -68,7 +47,6 @@ class pgDb:
         """)
         conn.commit()
 
-
     def update_storage_collection(conn, cursor, data):
         query=f"""
             UPDATE 
@@ -82,3 +60,63 @@ class pgDb:
         cursor.execute(query)
         conn.commit()
 
+    def store_sessions(conn, cursor, data):
+        for row in data:
+
+            # Save data to sessions table
+            cursor.execute(f"""
+                INSERT INTO public.sessions (timestamp, storagetype, storage, vserver, lifaddress, server, volume, username, protocol)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                    datetime.strptime(row['Timestamp'], '%Y%m%d%H%M%S').strftime('%Y-%m-%d %H:%M:%S'), 
+                    row['StorageType'], 
+                    row['Storage'], 
+                    row['vserver'], 
+                    row['lifaddress'], 
+                    row['ServerIP'], 
+                    row['Volume'], 
+                    row['Username'], 
+                    row['Protocol']
+                )
+            )
+            # Save data to volumes table
+            cursor.execute(f"""
+                INSERT INTO public.volumes (storagetype, storage, vserver, volume, protocol)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (storagetype, storage, vserver, volume, protocol) 
+                DO NOTHING
+            """, (
+                    row['StorageType'],
+                    row['Storage'],
+                    row['vserver'],
+                    row['Volume'],
+                    row['Protocol']
+                )
+            )
+
+            # Save data to sessionusers table
+            cursor.execute(f"""
+                INSERT INTO public.sessionusers (username, userprotocol)
+                VALUES (%s, %s)
+                ON CONFLICT (username, userprotocol)
+                DO NOTHING
+            """, (
+                    row['Username'],
+                    row['Protocol']
+                )
+            )
+            
+            # Save data to servers table
+            cursor.execute(f"""
+                INSERT INTO public.servers (serverip, username, protocol)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (serverip, username, protocol)
+                DO NOTHING
+            """, (
+                    row['ServerIP'],
+                    row['Username'],
+                    row['Protocol']
+                )
+            )
+
+            conn.commit()

@@ -141,7 +141,7 @@ def main():
             st.session_state.serverOffset = 0
 
             st.dataframe(
-                stContainersDf.get_servers(cursor=cursor),
+                stContainersDf.get_servers(cursor=cursor)[['ServerIP', 'Protocol']],
                 use_container_width=True,
                 height=400
             )
