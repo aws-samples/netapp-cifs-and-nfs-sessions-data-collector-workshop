@@ -181,12 +181,12 @@ def main():
         end_date = st.date_input("End Date", value=None)
     
     ## Show the storage systems configured
-    storage_df = stContainersDf.get_configured_storage(cursor=cursor)[['Name','StorageIP']]
+    # storage_df = stContainersDf.get_configured_storage(cursor=cursor)[['Name','StorageIP']]
+    session_users_df = stContainersDf.get_session_users(cursor=cursor)[['Username', 'Protocol']]
     volumes_df = stContainersDf.get_all_volumes(cursor=cursor)[['Volume', 'vserver', 'Storage' ]]
     servers_df = stContainersDf.get_servers(cursor=cursor)[['ServerIP']]
     
-
-    storage_list = create_selectors(storage_df)
+    session_users_list = create_selectors(session_users_df)
     volume_list = create_selectors(volumes_df)
     server_list = create_selectors(servers_df)
     
@@ -202,8 +202,8 @@ def main():
 
     
 
-    if server_list and volume_list and storage_list and selected_protocols:
-        st.session_state.time_first, st.session_state.time_last, st.session_state.selected_count = stContainersDf.filtered_sessions_summary(cursor=cursor, storage_list=storage_list, server_list=server_list, volume_list=volume_list, protocol_list=selected_protocols)
+    if server_list and volume_list and selected_protocols:
+        st.session_state.time_first, st.session_state.time_last, st.session_state.selected_count = stContainersDf.filtered_sessions_summary(cursor=cursor, server_list=server_list, volume_list=volume_list, session_users_list=session_users_list, protocol_list=selected_protocols)
         st.session_state.num_pages = round(st.session_state.selected_count/st.session_state.sessions_limit)
         
         # Convert date inputs to string format for SQL query if they exist
@@ -213,9 +213,9 @@ def main():
         # Pass date range to get_filtered_sessions
         sessions_df = stContainersDf.get_filtered_sessions(
             cursor=cursor, 
-            storage_list=storage_list, 
             server_list=server_list, 
             volume_list=volume_list, 
+            session_users_list=session_users_list,
             protocol_list=selected_protocols, 
             limit=st.session_state.sessions_limit, 
             offset=st.session_state.sessions_offset,

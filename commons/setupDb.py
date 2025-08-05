@@ -2,7 +2,7 @@ import os
 import sys
 sys.path.append(os.environ['PROJECT_HOME'])
 
-from sqlalchemy import create_engine, Column, String, TIMESTAMP, Table, Index, MetaData, LargeBinary, Boolean, select
+from sqlalchemy import create_engine, Column, String, TIMESTAMP, Table, Index, MetaData, LargeBinary, Boolean, select, UniqueConstraint
 from sqlalchemy.orm import declarative_base, Session
 from sqlalchemy.exc import ProgrammingError, IntegrityError
 from urllib.parse import quote_plus
@@ -55,6 +55,8 @@ class SessionUsers(Base):
 
 
 def create_tables(engine):
+
+    # Table for Data Collector streamlit users [guest and admin]
     try:
         Table(
             'users', 
@@ -66,28 +68,7 @@ def create_tables(engine):
         if "already exists" not in str(e):
             print("Table users already exists. No action needed.")
 
-    try:
-        Table(
-            'servers', 
-            MetaData(),
-            Column('serverip', String()),
-            Column('servername', String()),
-        ).create(bind=engine)
-    except ProgrammingError as e:
-        if "already exists" not in str(e):
-            print("Table servers already exists. No action needed.")
-
-    try:
-        Table(
-            'sessionusers', 
-            MetaData(),
-            Column('username', String()),
-            Column('userprotocol', String()),
-        ).create(bind=engine)
-    except ProgrammingError as e:
-        if "already exists" not in str(e):
-            print("Table sessionusers already exists. No action needed.")
-
+    # Table for Storage configurations
     try:
         Table(
             'storageconfigs', 
@@ -102,22 +83,8 @@ def create_tables(engine):
     except ProgrammingError as e:
         if "already exists" not in str(e):
             print("Table storageconfigs already exists. No action needed.")
-            
-            
-    try:
-        Table(
-            'volumes', 
-            MetaData(),
-            Column('storage', String()),
-            Column('vserver', String()),
-            Column('volume', String()),
-            Column('protocol', String())
-        ).create(bind=engine)
-    except ProgrammingError as e:
-        if "already exists" not in str(e):
-            print("Table volumes already exists. No action needed.")
 
-
+    # Table for active NFS and CIFS sessions
     try:
         Table(
             'sessions', 
@@ -135,6 +102,48 @@ def create_tables(engine):
     except ProgrammingError as e:
         if "already exists" not in str(e):
             print("Table sessions already exists. No action needed.")
+
+    # Table for server ips discovered in NFS and CIFS sessions with unique values in every column
+    try:
+        Table(
+            'servers', 
+            MetaData(),
+            Column('serverip', String()),
+            Column('username', String()),
+            UniqueConstraint('serverip', 'username', name='uix_serverip_username'),
+        ).create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            print("Table servers already exists. No action needed.")
+
+    # Table for useraccounts discovered in NFS and CIFS sessions
+    try:
+        Table(
+            'sessionusers', 
+            MetaData(),
+            Column('username', String()),
+            Column('userprotocol', String()),
+            UniqueConstraint('username', 'userprotocol', name='uix_user_protocol'),
+        ).create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            print("Table sessionusers already exists. No action needed.")
+
+    # Table for Volumes discovered in NFS and CIFS sessions
+    try:
+        Table(
+            'volumes', 
+            MetaData(),
+            Column('storagetype', String()),
+            Column('storage', String()),
+            Column('vserver', String()),
+            Column('volume', String()),
+            Column('protocol', String()),
+            UniqueConstraint('storagetype', 'storage', 'vserver', 'volume', 'protocol', name='uix_volume_protocol'),
+        ).create(bind=engine)
+    except ProgrammingError as e:
+        if "already exists" not in str(e):
+            print("Table volumes already exists. No action needed.")
 
 
 def create_indexes(engine, volSessions):

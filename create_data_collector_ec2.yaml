@@ -1,0 +1,149 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AWS CloudFormation Template for Storage Data Collector
+
+Parameters:
+  InstanceName:
+    Type: String
+    Description: EC2 instance name
+    Default: StorageDataCollector
+  InstanceVolumeSize:
+    Type: Number
+    Description: EC2 instance volume size in GB
+    Default: 100
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t3.xlarge
+  InstanceOperatingSystem:
+    Description: EC2 operating system
+    Type: String
+    Default: AmazonLinux-2023
+  DevServerPort:
+    Type: Number
+    Description: Port for the Data Collector
+    Default: 8080
+  AL2023AmiId:
+    Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  RouteableSubnet:
+    Type: String
+    Description: Subnet ID of the EC2 instance
+  VpcId:
+    Type: String
+    Description: VPC ID where the EC2 instance will be created
+  InstanceProfileName:
+    Type: String
+    Description: Name of existing IAM instance profile for the EC2 instance
+
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Instance Configuration
+        Parameters:
+          - InstanceName
+          - InstanceVolumeSize
+          - InstanceType
+          - InstanceOperatingSystem
+          - InstanceProfileName
+      - Label:
+          default: Network Configuration
+        Parameters:
+          - VpcId
+          - RouteableSubnet
+          - DevServerPort
+    ParameterLabels:
+      InstanceName:
+        default: Instance name
+      InstanceVolumeSize:
+        default: Instance volume size
+      InstanceType:
+        default: Instance type
+      InstanceOperatingSystem:
+        default: Instance operating system
+      DevServerPort:
+        default: Application port
+      VpcId:
+        default: VPC ID where the instance will be created
+      InstanceProfileName:
+        default: Name of existing IAM instance profile for EC2 instance
+      RouteableSubnet:
+        default: Set a subnet ID from where the EC2 instance will be accessible and able to reach all Storage systems
+
+Resources:
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow access through dev server port
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref DevServerPort
+          ToPort: !Ref DevServerPort
+          CidrIp: 0.0.0.0/0
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT20M
+        Count: 1
+    Properties:
+      ImageId: !Ref AL2023AmiId
+      InstanceType: !Ref InstanceType
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: "false"
+          DeviceIndex: "0"
+          GroupSet: 
+            - !Ref InstanceSecurityGroup
+          SubnetId: !Ref RouteableSubnet
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: !Ref InstanceVolumeSize
+            VolumeType: gp3
+            DeleteOnTermination: true
+            Encrypted: true
+      Monitoring: true
+      IamInstanceProfile: !Ref InstanceProfileName
+      UserData: 
+        Fn::Base64: !Sub |
+            #!/bin/bash
+            # Install essential packages only
+            yum install -y docker git
+            systemctl enable docker
+            systemctl start docker
+            usermod -aG docker ec2-user
+            
+            # Download docker-compose
+            curl -L "https://github.com/docker/compose/releases/download/v2.39.1/docker-compose-linux-x86_64" -o /usr/bin/docker-compose
+            chmod +x /usr/bin/docker-compose
+            
+            # Setup data collector directory
+            mkdir -p /usr/local/share/data_collector/
+            chown -R ec2-user:ec2-user /usr/local/share/data_collector/
+
+            sudo -u ec2-user bash -c '
+              git clone https://github.com/aws-samples/netapp-cifs-and-nfs-sessions-data-collector-workshop /usr/local/share/data_collector/netapp-cifs-and-nfs-sessions-data-collector
+              cd /usr/local/share/data_collector/netapp-cifs-and-nfs-sessions-data-collector
+              docker-compose build
+            ' > /var/log/setup.log 2>&1 
+            
+            # Signal CloudFormation that the instance is ready (before slow operations)
+            /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource EC2Instance --region ${AWS::Region}
+      Tags:
+      - Key: Name
+        Value: !Ref InstanceName
+
+Outputs:
+  URL:
+    Description: Storage datacollector URL
+    Value: !Join
+      - ''
+      - - 'http://'
+        - !GetAtt EC2Instance.PrivateIp
+        - ':'
+        - !Ref DevServerPort
+    Export:
+      Name: !Sub '${AWS::StackName}-DataCollectorURL'
