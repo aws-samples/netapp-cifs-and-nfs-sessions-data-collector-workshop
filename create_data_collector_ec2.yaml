@@ -87,7 +87,7 @@ Resources:
     Type: AWS::EC2::Instance
     CreationPolicy:
       ResourceSignal:
-        Timeout: PT20M
+        Timeout: PT30M
         Count: 1
     Properties:
       ImageId: !Ref AL2023AmiId
@@ -125,8 +125,8 @@ Resources:
             chown -R ec2-user:ec2-user /usr/local/share/data_collector/
 
             sudo -u ec2-user bash -c '
-              git clone https://github.com/aws-samples/netapp-cifs-and-nfs-sessions-data-collector-workshop /usr/local/share/data_collector/netapp-cifs-and-nfs-sessions-data-collector
-              cd /usr/local/share/data_collector/netapp-cifs-and-nfs-sessions-data-collector
+              git clone https://github.com/aws-samples/netapp-cifs-and-nfs-sessions-data-collector-workshop /usr/local/share/data_collector/
+              cd /usr/local/share/data_collector/
               docker-compose build
             ' > /var/log/setup.log 2>&1 
             

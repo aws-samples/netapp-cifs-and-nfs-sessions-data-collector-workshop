@@ -108,14 +108,13 @@ class pgDb:
             
             # Save data to servers table
             cursor.execute(f"""
-                INSERT INTO public.servers (serverip, username, protocol)
-                VALUES (%s, %s, %s)
-                ON CONFLICT (serverip, username, protocol)
+                INSERT INTO public.servers (serverip, username)
+                VALUES (%s, %s)
+                ON CONFLICT (serverip, username)
                 DO NOTHING
             """, (
                     row['ServerIP'],
-                    row['Username'],
-                    row['Protocol']
+                    row['Username']
                 )
             )
 
