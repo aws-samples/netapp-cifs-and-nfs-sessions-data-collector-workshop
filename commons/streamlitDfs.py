@@ -20,7 +20,7 @@ class stContainersDf:
             select * from servers s;
         """)
         server_list = cursor.fetchall()
-        server_list_df = pd.DataFrame(server_list, columns=['ServerIP', 'SessionUser', 'Protocol'])
+        server_list_df = pd.DataFrame(server_list, columns=['ServerIP', 'SessionUser'])
         return server_list_df
 
 
